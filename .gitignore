@@ -1,0 +1,8 @@
+#executables
+/**/*App
+
+/.vscode
+#for node services
+/**/node_modules
+#zip
+/*.zip

@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  
+  graph-gateway:
+    build:
+      context: ./../graph-gateway
+      dockerfile: ./../graph-gateway/graph-gateway.dockerfile
+    restart: always
+    ports:
+      - "8080:8080"
+    env_file:
+      - ./../graph-gateway/.env
+    deploy:
+      mode: replicated
+      replicas: 1
+
+  scheduler-service:
+    build:
+      context: ./../scheduler-service
+      dockerfile: ./../scheduler-service/scheduler-service.dockerfile
+    restart: always
+    ports:
+      - "50001:50001"
+    env_file:
+      - ./../scheduler-service/.env
+    deploy:
+      mode: replicated
+      replicas: 1
+
+  comms-service:
+    build:
+      context: ./../comms-service
+      dockerfile: ./../comms-service/comms-service.dockerfile
+    restart: always
+    ports:
+      - "50002:50002"
+    env_file:
+      - ./../comms-service/.env
+    deploy:
+      mode: replicated
+      replicas: 1

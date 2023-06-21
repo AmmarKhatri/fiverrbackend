@@ -1,0 +1,17 @@
+{
+	"folders": [
+		{
+			"path": "scheduler-service"
+		},
+		{
+			"path": "graph-gateway"
+		},
+		{
+			"path": "start"
+		},
+		{
+			"path": "comms-service"
+		}
+	],
+	"settings": {}
+}

@@ -1,0 +1,165 @@
+
+syntax = "proto3";
+package comms;
+option go_package = "/comms";
+import "google/protobuf/empty.proto";
+
+message Error {
+    int32 code = 1;
+    string description = 2;
+}   
+
+
+// Callback Status Object
+message CallbackStatus {
+    int32 code = 1;
+    string description = 2;
+    string updated_on = 3;
+    optional string reference_id = 4;
+    optional string last_channel = 5;
+}
+
+message ChannelStatus {
+    map<string, CallbackStatus> channel_statuses = 1;
+}
+
+message CallbackAdditionalInfo {
+    optional string mcc = 1;
+    optional string mnc = 2;
+    string price = 3;
+    string currency = 4;
+    int32 message_parts_count = 5;
+    string message_parts_reference_ids = 6;
+}
+
+message UserResponse {
+    string phone_number = 1;
+    string iso_country_code = 2;
+    string sender_id = 3;
+    string mo_message = 4;
+}
+
+// CALLBACK REQUESTS
+
+/*
+    Called by third party after the system has 
+    initiated an SMS text to a service user
+     (provider or customer)
+*/
+message OutgoingCallbackRequest {
+    string reference_id = 1;
+    CallbackStatus status = 2;
+    string submit_timestamp = 3;
+    repeated Error errors = 4;
+    string sub_resource = 5;    
+    optional CallbackAdditionalInfo additional_info = 6;
+    string external_id = 7;
+}
+
+/*
+ Called by third party when two parties directly text
+ each other
+*/
+message IncomingSMSCallbackRequest {
+    string reference_id = 1;
+    string sub_resource = 2;
+    repeated Error errors = 3;
+    CallbackStatus status = 4;
+    string submit_timestamp = 5;
+    UserResponse user_response = 6;
+    string mo_price = 7;
+}
+
+/* 
+  When an masked number from third-party vendor texts
+  another masked_number within a session.
+*/
+message MaskedNumberCallbackRequest {
+    string submit_timestamp = 1;
+    string from_phone_number = 2;
+    string mo_message = 3;
+    string mo_reference_id = 4;
+    string session_reference_id = 5;
+    string to_phone_number = 6;
+}
+
+/* 
+    An Multi-Channel Callback
+*/
+message MultiChannelCallbackRequest {
+    string receiver_id = 1;
+    string external_id = 2;
+    CallbackStatus status = 3;
+    repeated ChannelStatus channel_status = 4;
+}
+
+
+// APPOINTMENT messages
+
+message CommsAppointmentInput {
+    int64 provider_id = 1;
+    int64 customer_id = 2;
+    repeated int64 recipient_ids = 3;
+    int64 appointment_type_id = 4;
+    int64 startDate = 5;
+    int64 endDate = 6;
+}
+
+message CommsPendingAppointment {
+    string id = 1;
+    string status = 2;
+}
+
+message AcceptedAppointmentInput {
+    int64 appointment_id = 1;
+    int64 status = 2;
+    CommsAppointmentInput appointment = 3;
+}
+
+message RejectedAppointmentInput {
+    int64 pending_appointment_id = 1;
+}
+
+message CommsAppointment {
+    int64 id = 1;
+    int64 provider_id = 2;
+    int64 customer_id = 3;
+    repeated int64 recipient_ids = 4;
+    int64 appointment_type_id = 5;
+    int64 start_date = 6;
+    int64 end_date = 7;
+}
+
+// STANDARD MESSAGING INITIATED FROM CONSOLE
+
+message ConsoleMessageInput {
+    int64 sender_id = 1;
+    int64 receiver_id = 2;
+    string app_message = 3;
+    repeated string cdn_urls = 4;
+}
+
+message ConsoleMessage {
+    int64 id = 1;
+    int64 sender_id = 2;
+    int64 receiver_id = 3;
+    string app_message = 4;
+    repeated string cdn_urls = 5;
+}
+
+service Communicator {
+    rpc ProcessOutgoingCallback(OutgoingCallbackRequest) returns (google.protobuf.Empty);
+    rpc ProcessIncomingSMSCallback(IncomingSMSCallbackRequest) returns (google.protobuf.Empty);
+    rpc ProcessMultiChannelCallback(MultiChannelCallbackRequest) returns(google.protobuf.Empty);
+    rpc RequestAppointment(CommsAppointmentInput) returns (CommsPendingAppointment);
+    rpc AcceptAppointment(AcceptedAppointmentInput) returns (CommsAppointment);
+    rpc RejectAppointment(RejectedAppointmentInput) returns (google.protobuf.Empty);
+    rpc SendMessageFromConsole(ConsoleMessageInput) returns (ConsoleMessage);
+}
+
+// usage:
+//   rules: # IMPORTANT: ONLY LAST MATCHING RULE IS APPLIED
+//   # Disable API key validation on just the ListShelves method
+//   # while requiring an API key for the rest of the API.
+//   - selector: "*"
+//     allow_unregistered_calls: false

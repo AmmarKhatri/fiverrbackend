@@ -1,0 +1,238 @@
+query List {
+  ListProviderDays(input: {
+    id: 1,
+    provider: {
+      id: 1,
+      name: "Someone",
+      phone: "phone",
+      email: "email",
+      has_visible_calendar: true,
+      service_types: [
+        {
+          id: 1,
+          label: "Label of service",
+          description: "Description",
+          base_price: 1000,
+          default_duration: 60
+        }
+      ],
+    },
+    startDate: 10000000,
+    length: 20
+  }) {
+    days{
+      date{
+        labels{id}
+      }
+    }
+  }
+  ListCustomerDays(input:{
+    id: 1,
+    provider: {
+      id: 1,
+      name: "Someone",
+      phone: "phone",
+      email: "email",
+      has_visible_calendar: true,
+      service_types: [
+        {
+          id: 1,
+          label: "Label of service",
+          description: "Description",
+          base_price: 1000,
+          default_duration: 60
+        }
+      ],
+    },
+    startDate: 10000000,
+    length: 20
+  }){
+    days{
+      date{
+        provider{
+          name
+        }
+      }
+    }
+  }
+  GetDayDetails(input:{
+    calendar_date: 100000000,
+    provider:{
+      id: 200,
+      name:"M",
+      phone: "23232",
+      email: "eerer",
+      has_visible_calendar: true,
+      service_types: [
+       	{
+          id: 1,
+          label: "Label of service",
+          description: "Description",
+          base_price: 1000,
+          default_duration: 60
+        }
+      ]
+    },
+    is_available: false,
+    labels: []
+  }){
+    day
+  }
+}
+
+mutation MakingChanges {
+  AddAppointment(input:{
+    appointment: {
+      appointment_id: 1,
+      provider: {
+        id: 200,
+        name:"M",
+        phone: "23232",
+        email: "eerer",
+        has_visible_calendar: true,
+        service_types: [
+          {
+            id: 1,
+            label: "Label of service",
+            description: "Description",
+            base_price: 1000,
+            default_duration: 60
+          }
+        ]
+      },
+      customer: {
+        id: 200,
+        name: "",
+        phone: "",
+        email:""
+        recipients:[]
+      },
+      service_type: {
+          id: 1,
+          label: "Label of service",
+          description: "Description",
+          base_price: 1000,
+          default_duration: 60
+      },
+      startDate: 100000000,
+      duration: 20000000,
+      days:{
+        calendar_date: 1000,
+        is_available: false,
+        labels: [],
+        provider: {
+        id: 200,
+        name:"M",
+        phone: "23232",
+        email: "eerer",
+        has_visible_calendar: true,
+        service_types: [
+          {
+            id: 1,
+            label: "Label of service",
+            description: "Description",
+            base_price: 1000,
+            default_duration: 60
+          }
+        ],
+        
+        }
+      },
+      
+    },
+    provider: {
+      id: 20,
+      name:"M",
+      phone: "23232",
+      email: "eerer",
+      has_visible_calendar: true,
+      service_types: [
+       	{
+          id: 1,
+          label: "Label of service",
+          description: "Description",
+          base_price: 1000,
+          default_duration: 60
+        }
+      ]
+    }
+  }){
+    startDate
+  },
+  UpdateCalendar(input:{
+    provider: {
+      id: 20,
+      name:"M",
+      phone: "23232",
+      email: "eerer",
+      has_visible_calendar: true,
+      service_types: [
+       	{
+          id: 1,
+          label: "Label of service",
+          description: "Description",
+          base_price: 1000,
+          default_duration: 60
+        }
+      ]
+    },
+    days:[
+      {
+        date: {
+          provider: {
+            id: 20,
+            name:"M",
+            phone: "23232",
+            email: "eerer",
+            has_visible_calendar: true,
+            service_types: [
+              {
+                id: 1,
+                label: "Label of service",
+                description: "Description",
+                base_price: 1000,
+                default_duration: 60
+              }
+            ]
+          },
+          calendar_date: 200,
+          is_available: false,
+          labels:[]
+        },
+        labels: [],
+        day_summary: {
+          provider: {
+            id: 20,
+            name:"M",
+            phone: "23232",
+            email: "eerer",
+            has_visible_calendar: true,
+            service_types: [
+              {
+                id: 1,
+                label: "Label of service",
+                description: "Description",
+                base_price: 1000,
+                default_duration: 60
+              }
+            ]
+          },
+          day: 200,
+  appointment_summaries: {
+            icon: "",
+            total_appointments_per_type: 20
+          }
+        }
+      }
+    ]
+  }){
+    days{
+      date{
+        calendar_date
+      }
+    }
+  }
+  CancelAppointment(input: {
+    appointment_id: 20
+  })
+}

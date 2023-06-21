@@ -1,0 +1,22 @@
+type Query{
+    #scheduler queries
+    ListProviderDays(input: ListDaysRequest): ListProviderDaysResponse!
+    ListCustomerDays(input: ListDaysRequest): ListCustomerDaysResponse!
+    GetDayDetails(input: DayInput): DayDetails!
+    #comms queries
+    ProcessOutgoingCallback(input: OutgoingCallbackRequest): Empty
+    ProcessIncomingSMSCallback(input: IncomingSMSCallbackRequest): Empty
+    ProcessMultiChannelCallback(input: MultiChannelCallbackRequest): Empty
+    RequestAppointment(input: CommsAppointmentInput): CommsPendingAppointment!
+}
+
+type Mutation {
+    #schedular mutations
+    UpdateCalendar(input: UpdateCalendarRequest): UpdateCalendarResponse!
+    AddAppointment(input: AddAppointmentRequest): Appointment!
+    CancelAppointment(input: CancelAppointmentRequest): Empty
+    #comms mutations
+    AcceptedAppointment(input: AcceptedAppointmentInput): CommsAppointment!
+    RejectedAppointment(input: RejectedAppointmentInput): Empty
+    SendMessageFromConsole(input: ConsoleMessageInput): ConsoleMessage!
+}

@@ -1,0 +1,89 @@
+# GraphQL schema example
+#
+# https://gqlgen.com/getting-started/
+directive @goModel(model: String, models: [String!]) on OBJECT
+    | INPUT_OBJECT
+    | SCALAR
+    | ENUM
+    | INTERFACE
+    | UNION
+
+directive @goField(forceResolver: Boolean, name: String, omittable: Boolean) on INPUT_FIELD_DEFINITION
+    | FIELD_DEFINITION
+
+type ServiceType @goModel(model: "graph-gateway/protos/schedule/schedule.ServiceType"){
+    id: ID! @goField(name: "id")
+    label: String! @goField(name: "label")
+    description: String! @goField(name: "description")
+    base_price: Float! @goField(name: "base_price")
+    default_duration: Int! @goField(name: "default_duration")
+}
+type Day @goModel(model: "graph-gateway/protos/schedule/schedule.Day"){
+    provider: Provider! @goField(name: "provider", forceResolver: true)
+    calendar_date: Int! @goField(name: "calendar_date")
+    is_available: Boolean! @goField(name: "is_available")
+    labels: [Label!]! @goField(name: "labels", forceResolver: true)
+}
+
+type Label @goModel(model: "graph-gateway/protos/schedule/schedule.Label") {
+  id: ID! @goField(name: "id")
+  label_text: String! @goField(name: "label_text")
+  label_color: String! @goField(name: "label_color")
+}
+
+input ProviderInput @goModel(model: "graph-gateway/protos/schedule/schedule.Provider") {
+    id: ID! @goField(name: "id")
+    name: String! @goField(name: "name")
+    phone: String! @goField(name: "phone")
+    email: String! @goField(name: "email")
+    has_visible_calendar: Boolean! @goField(name: "has_visible_calendar")
+    service_types: [ServiceTypeInput!]! @goField(name: "service_types", forceResolver: true)
+}
+
+input ServiceTypeInput @goModel(model: "graph-gateway/protos/schedule/schedule.ServiceType"){
+    id: ID! @goField(name: "id")
+    label: String! @goField(name: "label")
+    description: String! @goField(name: "description")
+    base_price: Float! @goField(name: "base_price")
+    default_duration: Int! @goField(name: "default_duration")
+}
+
+type Provider @goModel(model: "graph-gateway/protos/schedule/schedule.Provider") {
+    id: ID! @goField(name: "id")
+    name: String! @goField(name: "name")
+    phone: String! @goField(name: "phone")
+    email: String! @goField(name: "email")
+    has_visible_calendar: Boolean! @goField(name: "has_visible_calendar")
+    service_types: [ServiceType!]! @goField(name: "service_types", forceResolver: true)
+}
+type DaySummary @goModel(model: "graph-gateway/protos/schedule/schedule.DaySummary"){
+    provider: Provider! @goField(name: "provider", forceResolver: true)
+    day: Int! @goField(name: "day")
+    appointment_summaries: [AppointmentTypeSummary!]! @goField(name: "appointment_summaries", forceResolver: true)
+}
+
+type AppointmentTypeSummary @goModel(model: "graph-gateway/protos/schedule/schedule.AppointmentTypeSummary") {
+  icon: String! @goField(name: "icon")
+  total_appointments_per_type: Int! @goField(name: "total_appointments_per_type")
+}
+
+type ProviderDay @goModel(model: "graph-gateway/protos/schedule/schedule.ProviderDay"){
+    date: Day! @goField(name: "date", forceResolver: true)
+    labels: [Label!]! @goField(name: "labels", forceResolver: true)
+    day_summary: DaySummary! @goField(name: "day_summary",forceResolver: true)
+}
+
+input ListDaysRequest @goModel(model: "graph-gateway/protos/schedule/schedule.ListDaysRequest"){
+    id: ID! @goField(name: "id")
+    provider: ProviderInput! @goField(name: "provider", forceResolver: true)
+    startDate: Int! @goField(name: "startDate")
+    length: Int! @goField(name: "length")
+}
+
+type ListProviderDaysResponse @goModel(model: "graph-gateway/protos/schedule/schedule.ListProviderDaysResponse"){
+    days: [ProviderDay!]! @goField(name: "days", forceResolver: true)
+}
+
+type Query{
+    ListProviderDays(input: ListDaysRequest!): ListProviderDaysResponse!
+}

@@ -1,0 +1,113 @@
+input OutgoingCallbackRequest {
+    reference_id: String!
+    status: CallbackStatus!
+    submit_timestamp: String!
+    errors: [Error!]!
+    sub_resource: String!
+    additional_info: CallbackAdditionalInfo
+    external_id: String
+}
+
+input Error {
+    code: Int!
+    description: String!
+}
+
+input CallbackStatus {
+    code: Int!
+    description: String!
+    updated_on: String!
+    reference_id: String
+    last_channel: String
+}
+
+input CallbackAdditionalInfo {
+    mcc: String
+    mnc: String
+    price:String!
+    currency: String!
+    message_parts_count: Int!
+    message_parts_reference_ids: String!
+}
+
+input IncomingSMSCallbackRequest {
+    reference_id: String!
+    sub_resource: String!
+    errors: [Error!]!
+    status: CallbackStatus!
+    submit_timestamp: String!
+    user_response: UserResponse!
+    mo_price: String!
+}
+
+input UserResponse {
+    phone_number: String!
+    iso_country_code: String!
+    sender_id: String!
+    mo_message: String!
+}
+
+input MultiChannelCallbackRequest {
+    receiver_id: String!
+    external_id: String!
+    status: CallbackStatus!
+    channel_status: [ChannelStatus!]!
+}
+input ChannelStatuses {
+    key: String!
+    value: CallbackStatus!
+}
+input ChannelStatus {
+    channel_statuses: [ChannelStatuses!]!
+}
+
+input CommsAppointmentInput {
+    provider_id: ID!
+    customer_id: ID!
+    recipient_ids: [ID!]!
+    appointment_type_id: ID!
+    startDate: Int!
+    endDate: Int!
+}
+
+type CommsAppointment {
+    id: ID!
+    provider_id: ID!
+    customer_id: ID!
+    recipient_ids: [ID!]!
+    appointment_type_id: ID!
+    start_date: Int!
+    end_date: Int!
+}
+
+type CommsPendingAppointment{
+    id: String!
+    status: String!
+}
+
+input AcceptedAppointmentInput{
+    appointment_id: ID!
+    status: Int!
+    appointment: CommsAppointmentInput!
+}
+
+input RejectedAppointmentInput {
+    pending_appointment_id: ID!
+}
+
+input ConsoleMessageInput{
+    sender_id: ID!
+    receiver_id: ID!
+    app_message: String!
+    cdn_urls: [String!]!
+}
+
+type ConsoleMessage {
+    id: ID!
+    sender_id: ID!
+    receiver_id: ID!
+    app_message: String!
+    cdn_urls: [String!]!
+}
+
+
