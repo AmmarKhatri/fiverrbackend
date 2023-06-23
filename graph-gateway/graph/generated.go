@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"graph-gateway/graph/model"
+	"graph-gateway/protos/catalog"
 	"graph-gateway/protos/comms"
 	"graph-gateway/protos/schedule"
 	"strconv"
@@ -39,9 +40,15 @@ type Config struct {
 }
 
 type ResolverRoot interface {
+	AppointmentCharge() AppointmentChargeResolver
+	ClientPrice() ClientPriceResolver
 	Mutation() MutationResolver
 	Query() QueryResolver
+	Service() ServiceResolver
+	AddServiceRequest() AddServiceRequestResolver
 	ChannelStatus() ChannelStatusResolver
+	EditServiceRequest() EditServiceRequestResolver
+	SetClientPriceRequest() SetClientPriceRequestResolver
 }
 
 type DirectiveRoot struct {
@@ -58,9 +65,20 @@ type ComplexityRoot struct {
 		StartDate     func(childComplexity int) int
 	}
 
+	AppointmentCharge struct {
+		AppointmentCharge func(childComplexity int) int
+		AppointmentId     func(childComplexity int) int
+	}
+
 	AppointmentTypeSummary struct {
 		Icon                     func(childComplexity int) int
 		TotalAppointmentsPerType func(childComplexity int) int
+	}
+
+	ClientPrice struct {
+		ClientId  func(childComplexity int) int
+		Price     func(childComplexity int) int
+		ServiceId func(childComplexity int) int
 	}
 
 	CommsAppointment struct {
@@ -118,6 +136,10 @@ type ComplexityRoot struct {
 		Provider             func(childComplexity int) int
 	}
 
+	GetCatalogResponse struct {
+		Services func(childComplexity int) int
+	}
+
 	Label struct {
 		Id         func(childComplexity int) int
 		LabelColor func(childComplexity int) int
@@ -135,9 +157,13 @@ type ComplexityRoot struct {
 	Mutation struct {
 		AcceptedAppointment    func(childComplexity int, input *comms.AcceptedAppointmentInput) int
 		AddAppointment         func(childComplexity int, input *schedule.AddAppointmentRequest) int
+		AddService             func(childComplexity int, input *catalog.AddServiceRequest) int
 		CancelAppointment      func(childComplexity int, input *schedule.CancelAppointmentRequest) int
+		DeleteService          func(childComplexity int, input *catalog.DeleteServiceRequest) int
+		EditService            func(childComplexity int, input *catalog.EditServiceRequest) int
 		RejectedAppointment    func(childComplexity int, input *comms.RejectedAppointmentInput) int
 		SendMessageFromConsole func(childComplexity int, input *comms.ConsoleMessageInput) int
+		SetClientPrice         func(childComplexity int, input *catalog.SetClientPriceRequest) int
 		UpdateCalendar         func(childComplexity int, input *schedule.UpdateCalendarRequest) int
 	}
 
@@ -157,6 +183,9 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
+		GetAppointmentCharge        func(childComplexity int, input *catalog.GetAppointmentChargeRequest) int
+		GetCatalog                  func(childComplexity int, input *catalog.GetCatalogRequest) int
+		GetClientPrice              func(childComplexity int, input *catalog.GetClientPriceRequest) int
 		GetDayDetails               func(childComplexity int, input *schedule.DayInput) int
 		ListCustomerDays            func(childComplexity int, input *schedule.ListDaysRequest) int
 		ListProviderDays            func(childComplexity int, input *schedule.ListDaysRequest) int
@@ -180,6 +209,16 @@ type ComplexityRoot struct {
 		RecipientTypeId func(childComplexity int) int
 	}
 
+	Service struct {
+		DefaultDuration func(childComplexity int) int
+		Description     func(childComplexity int) int
+		Id              func(childComplexity int) int
+		Name            func(childComplexity int) int
+		Price           func(childComplexity int) int
+		ProviderId      func(childComplexity int) int
+		ServiceTypeId   func(childComplexity int) int
+	}
+
 	ServiceType struct {
 		BasePrice       func(childComplexity int) int
 		DefaultDuration func(childComplexity int) int
@@ -193,6 +232,12 @@ type ComplexityRoot struct {
 	}
 }
 
+type AppointmentChargeResolver interface {
+	AppointmentCharge(ctx context.Context, obj *catalog.AppointmentCharge) (float64, error)
+}
+type ClientPriceResolver interface {
+	Price(ctx context.Context, obj *catalog.ClientPrice) (float64, error)
+}
 type MutationResolver interface {
 	UpdateCalendar(ctx context.Context, input *schedule.UpdateCalendarRequest) (*schedule.UpdateCalendarResponse, error)
 	AddAppointment(ctx context.Context, input *schedule.AddAppointmentRequest) (*schedule.Appointment, error)
@@ -200,6 +245,10 @@ type MutationResolver interface {
 	AcceptedAppointment(ctx context.Context, input *comms.AcceptedAppointmentInput) (*comms.CommsAppointment, error)
 	RejectedAppointment(ctx context.Context, input *comms.RejectedAppointmentInput) (*string, error)
 	SendMessageFromConsole(ctx context.Context, input *comms.ConsoleMessageInput) (*comms.ConsoleMessage, error)
+	AddService(ctx context.Context, input *catalog.AddServiceRequest) (*catalog.Service, error)
+	EditService(ctx context.Context, input *catalog.EditServiceRequest) (*catalog.Service, error)
+	DeleteService(ctx context.Context, input *catalog.DeleteServiceRequest) (*string, error)
+	SetClientPrice(ctx context.Context, input *catalog.SetClientPriceRequest) (*catalog.ClientPrice, error)
 }
 type QueryResolver interface {
 	ListProviderDays(ctx context.Context, input *schedule.ListDaysRequest) (*schedule.ListProviderDaysResponse, error)
@@ -209,10 +258,25 @@ type QueryResolver interface {
 	ProcessIncomingSMSCallback(ctx context.Context, input *comms.IncomingSMSCallbackRequest) (*string, error)
 	ProcessMultiChannelCallback(ctx context.Context, input *comms.MultiChannelCallbackRequest) (*string, error)
 	RequestAppointment(ctx context.Context, input *comms.CommsAppointmentInput) (*comms.CommsPendingAppointment, error)
+	GetCatalog(ctx context.Context, input *catalog.GetCatalogRequest) (*catalog.GetCatalogResponse, error)
+	GetClientPrice(ctx context.Context, input *catalog.GetClientPriceRequest) (*catalog.ClientPrice, error)
+	GetAppointmentCharge(ctx context.Context, input *catalog.GetAppointmentChargeRequest) (*catalog.AppointmentCharge, error)
+}
+type ServiceResolver interface {
+	Price(ctx context.Context, obj *catalog.Service) (float64, error)
 }
 
+type AddServiceRequestResolver interface {
+	Price(ctx context.Context, obj *catalog.AddServiceRequest, data float64) error
+}
 type ChannelStatusResolver interface {
 	ChannelStatuses(ctx context.Context, obj *comms.ChannelStatus, data []*model.ChannelStatuses) error
+}
+type EditServiceRequestResolver interface {
+	Price(ctx context.Context, obj *catalog.EditServiceRequest, data float64) error
+}
+type SetClientPriceRequestResolver interface {
+	Price(ctx context.Context, obj *catalog.SetClientPriceRequest, data float64) error
 }
 
 type executableSchema struct {
@@ -279,6 +343,20 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Appointment.StartDate(childComplexity), true
 
+	case "AppointmentCharge.appointment_charge":
+		if e.complexity.AppointmentCharge.AppointmentCharge == nil {
+			break
+		}
+
+		return e.complexity.AppointmentCharge.AppointmentCharge(childComplexity), true
+
+	case "AppointmentCharge.appointment_id":
+		if e.complexity.AppointmentCharge.AppointmentId == nil {
+			break
+		}
+
+		return e.complexity.AppointmentCharge.AppointmentId(childComplexity), true
+
 	case "AppointmentTypeSummary.icon":
 		if e.complexity.AppointmentTypeSummary.Icon == nil {
 			break
@@ -292,6 +370,27 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.AppointmentTypeSummary.TotalAppointmentsPerType(childComplexity), true
+
+	case "ClientPrice.client_id":
+		if e.complexity.ClientPrice.ClientId == nil {
+			break
+		}
+
+		return e.complexity.ClientPrice.ClientId(childComplexity), true
+
+	case "ClientPrice.price":
+		if e.complexity.ClientPrice.Price == nil {
+			break
+		}
+
+		return e.complexity.ClientPrice.Price(childComplexity), true
+
+	case "ClientPrice.service_id":
+		if e.complexity.ClientPrice.ServiceId == nil {
+			break
+		}
+
+		return e.complexity.ClientPrice.ServiceId(childComplexity), true
 
 	case "CommsAppointment.appointment_type_id":
 		if e.complexity.CommsAppointment.AppointmentTypeId == nil {
@@ -510,6 +609,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.DaySummary.Provider(childComplexity), true
 
+	case "GetCatalogResponse.services":
+		if e.complexity.GetCatalogResponse.Services == nil {
+			break
+		}
+
+		return e.complexity.GetCatalogResponse.Services(childComplexity), true
+
 	case "Label.id":
 		if e.complexity.Label.Id == nil {
 			break
@@ -569,6 +675,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.AddAppointment(childComplexity, args["input"].(*schedule.AddAppointmentRequest)), true
 
+	case "Mutation.AddService":
+		if e.complexity.Mutation.AddService == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_AddService_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.AddService(childComplexity, args["input"].(*catalog.AddServiceRequest)), true
+
 	case "Mutation.CancelAppointment":
 		if e.complexity.Mutation.CancelAppointment == nil {
 			break
@@ -580,6 +698,30 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.CancelAppointment(childComplexity, args["input"].(*schedule.CancelAppointmentRequest)), true
+
+	case "Mutation.DeleteService":
+		if e.complexity.Mutation.DeleteService == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_DeleteService_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.DeleteService(childComplexity, args["input"].(*catalog.DeleteServiceRequest)), true
+
+	case "Mutation.EditService":
+		if e.complexity.Mutation.EditService == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_EditService_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.EditService(childComplexity, args["input"].(*catalog.EditServiceRequest)), true
 
 	case "Mutation.RejectedAppointment":
 		if e.complexity.Mutation.RejectedAppointment == nil {
@@ -604,6 +746,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.SendMessageFromConsole(childComplexity, args["input"].(*comms.ConsoleMessageInput)), true
+
+	case "Mutation.SetClientPrice":
+		if e.complexity.Mutation.SetClientPrice == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_SetClientPrice_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.SetClientPrice(childComplexity, args["input"].(*catalog.SetClientPriceRequest)), true
 
 	case "Mutation.UpdateCalendar":
 		if e.complexity.Mutation.UpdateCalendar == nil {
@@ -679,6 +833,42 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.ProviderDay.Labels(childComplexity), true
+
+	case "Query.GetAppointmentCharge":
+		if e.complexity.Query.GetAppointmentCharge == nil {
+			break
+		}
+
+		args, err := ec.field_Query_GetAppointmentCharge_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.GetAppointmentCharge(childComplexity, args["input"].(*catalog.GetAppointmentChargeRequest)), true
+
+	case "Query.GetCatalog":
+		if e.complexity.Query.GetCatalog == nil {
+			break
+		}
+
+		args, err := ec.field_Query_GetCatalog_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.GetCatalog(childComplexity, args["input"].(*catalog.GetCatalogRequest)), true
+
+	case "Query.GetClientPrice":
+		if e.complexity.Query.GetClientPrice == nil {
+			break
+		}
+
+		args, err := ec.field_Query_GetClientPrice_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.GetClientPrice(childComplexity, args["input"].(*catalog.GetClientPriceRequest)), true
 
 	case "Query.GetDayDetails":
 		if e.complexity.Query.GetDayDetails == nil {
@@ -820,6 +1010,55 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.RecipientAttributes.RecipientTypeId(childComplexity), true
 
+	case "Service.default_duration":
+		if e.complexity.Service.DefaultDuration == nil {
+			break
+		}
+
+		return e.complexity.Service.DefaultDuration(childComplexity), true
+
+	case "Service.description":
+		if e.complexity.Service.Description == nil {
+			break
+		}
+
+		return e.complexity.Service.Description(childComplexity), true
+
+	case "Service.id":
+		if e.complexity.Service.Id == nil {
+			break
+		}
+
+		return e.complexity.Service.Id(childComplexity), true
+
+	case "Service.name":
+		if e.complexity.Service.Name == nil {
+			break
+		}
+
+		return e.complexity.Service.Name(childComplexity), true
+
+	case "Service.price":
+		if e.complexity.Service.Price == nil {
+			break
+		}
+
+		return e.complexity.Service.Price(childComplexity), true
+
+	case "Service.provider_id":
+		if e.complexity.Service.ProviderId == nil {
+			break
+		}
+
+		return e.complexity.Service.ProviderId(childComplexity), true
+
+	case "Service.service_type_id":
+		if e.complexity.Service.ServiceTypeId == nil {
+			break
+		}
+
+		return e.complexity.Service.ServiceTypeId(childComplexity), true
+
 	case "ServiceType.base_price":
 		if e.complexity.ServiceType.BasePrice == nil {
 			break
@@ -872,6 +1111,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 	inputUnmarshalMap := graphql.BuildUnmarshalerMap(
 		ec.unmarshalInputAcceptedAppointmentInput,
 		ec.unmarshalInputAddAppointmentRequest,
+		ec.unmarshalInputAddServiceRequest,
 		ec.unmarshalInputAppointmentInput,
 		ec.unmarshalInputAppointmentTypeSummaryInput,
 		ec.unmarshalInputCallbackAdditionalInfo,
@@ -884,7 +1124,12 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputCustomerInput,
 		ec.unmarshalInputDayInput,
 		ec.unmarshalInputDaySummaryInput,
+		ec.unmarshalInputDeleteServiceRequest,
+		ec.unmarshalInputEditServiceRequest,
 		ec.unmarshalInputError,
+		ec.unmarshalInputGetAppointmentChargeRequest,
+		ec.unmarshalInputGetCatalogRequest,
+		ec.unmarshalInputGetClientPriceRequest,
 		ec.unmarshalInputIncomingSMSCallbackRequest,
 		ec.unmarshalInputLabelInput,
 		ec.unmarshalInputListDaysRequest,
@@ -896,6 +1141,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputRecipientInput,
 		ec.unmarshalInputRejectedAppointmentInput,
 		ec.unmarshalInputServiceTypeInput,
+		ec.unmarshalInputSetClientPriceRequest,
 		ec.unmarshalInputUpdateCalendarRequest,
 		ec.unmarshalInputUserResponse,
 	)
@@ -994,7 +1240,7 @@ func (ec *executionContext) introspectType(name string) (*introspection.Type, er
 	return introspection.WrapTypeFromDef(parsedSchema, parsedSchema.Types[name]), nil
 }
 
-//go:embed "comms.graphqls" "scheduler.graphqls" "schema.graphqls"
+//go:embed "catalog.graphqls" "comms.graphqls" "scheduler.graphqls" "schema.graphqls"
 var sourcesFS embed.FS
 
 func sourceData(filename string) string {
@@ -1006,6 +1252,7 @@ func sourceData(filename string) string {
 }
 
 var sources = []*ast.Source{
+	{Name: "catalog.graphqls", Input: sourceData("catalog.graphqls"), BuiltIn: false},
 	{Name: "comms.graphqls", Input: sourceData("comms.graphqls"), BuiltIn: false},
 	{Name: "scheduler.graphqls", Input: sourceData("scheduler.graphqls"), BuiltIn: false},
 	{Name: "schema.graphqls", Input: sourceData("schema.graphqls"), BuiltIn: false},
@@ -1046,6 +1293,21 @@ func (ec *executionContext) field_Mutation_AddAppointment_args(ctx context.Conte
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_AddService_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *catalog.AddServiceRequest
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalOAddServiceRequest2ᚖgraphᚑgatewayᚋprotosᚋcatalogᚐAddServiceRequest(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_CancelAppointment_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -1053,6 +1315,36 @@ func (ec *executionContext) field_Mutation_CancelAppointment_args(ctx context.Co
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
 		arg0, err = ec.unmarshalOCancelAppointmentRequest2ᚖgraphᚑgatewayᚋprotosᚋscheduleᚐCancelAppointmentRequest(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_DeleteService_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *catalog.DeleteServiceRequest
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalODeleteServiceRequest2ᚖgraphᚑgatewayᚋprotosᚋcatalogᚐDeleteServiceRequest(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_EditService_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *catalog.EditServiceRequest
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalOEditServiceRequest2ᚖgraphᚑgatewayᚋprotosᚋcatalogᚐEditServiceRequest(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -1091,6 +1383,21 @@ func (ec *executionContext) field_Mutation_SendMessageFromConsole_args(ctx conte
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_SetClientPrice_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *catalog.SetClientPriceRequest
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalOSetClientPriceRequest2ᚖgraphᚑgatewayᚋprotosᚋcatalogᚐSetClientPriceRequest(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_UpdateCalendar_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -1098,6 +1405,51 @@ func (ec *executionContext) field_Mutation_UpdateCalendar_args(ctx context.Conte
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
 		arg0, err = ec.unmarshalOUpdateCalendarRequest2ᚖgraphᚑgatewayᚋprotosᚋscheduleᚐUpdateCalendarRequest(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_GetAppointmentCharge_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *catalog.GetAppointmentChargeRequest
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalOGetAppointmentChargeRequest2ᚖgraphᚑgatewayᚋprotosᚋcatalogᚐGetAppointmentChargeRequest(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_GetCatalog_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *catalog.GetCatalogRequest
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalOGetCatalogRequest2ᚖgraphᚑgatewayᚋprotosᚋcatalogᚐGetCatalogRequest(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_GetClientPrice_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *catalog.GetClientPriceRequest
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalOGetClientPriceRequest2ᚖgraphᚑgatewayᚋprotosᚋcatalogᚐGetClientPriceRequest(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -1620,6 +1972,94 @@ func (ec *executionContext) fieldContext_Appointment_days(ctx context.Context, f
 	return fc, nil
 }
 
+func (ec *executionContext) _AppointmentCharge_appointment_id(ctx context.Context, field graphql.CollectedField, obj *catalog.AppointmentCharge) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_AppointmentCharge_appointment_id(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.AppointmentId, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int64)
+	fc.Result = res
+	return ec.marshalNID2int64(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_AppointmentCharge_appointment_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AppointmentCharge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AppointmentCharge_appointment_charge(ctx context.Context, field graphql.CollectedField, obj *catalog.AppointmentCharge) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_AppointmentCharge_appointment_charge(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.AppointmentCharge().AppointmentCharge(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(float64)
+	fc.Result = res
+	return ec.marshalNFloat2float64(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_AppointmentCharge_appointment_charge(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AppointmentCharge",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Float does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _AppointmentTypeSummary_icon(ctx context.Context, field graphql.CollectedField, obj *schedule.AppointmentTypeSummary) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_AppointmentTypeSummary_icon(ctx, field)
 	if err != nil {
@@ -1703,6 +2143,138 @@ func (ec *executionContext) fieldContext_AppointmentTypeSummary_total_appointmen
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ClientPrice_client_id(ctx context.Context, field graphql.CollectedField, obj *catalog.ClientPrice) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ClientPrice_client_id(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ClientId, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int64)
+	fc.Result = res
+	return ec.marshalNID2int64(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ClientPrice_client_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ClientPrice",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ClientPrice_service_id(ctx context.Context, field graphql.CollectedField, obj *catalog.ClientPrice) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ClientPrice_service_id(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ServiceId, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int64)
+	fc.Result = res
+	return ec.marshalNID2int64(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ClientPrice_service_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ClientPrice",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ClientPrice_price(ctx context.Context, field graphql.CollectedField, obj *catalog.ClientPrice) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ClientPrice_price(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.ClientPrice().Price(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(float64)
+	fc.Result = res
+	return ec.marshalNFloat2float64(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ClientPrice_price(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ClientPrice",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Float does not have child fields")
 		},
 	}
 	return fc, nil
@@ -3182,6 +3754,66 @@ func (ec *executionContext) fieldContext_DaySummary_appointment_summaries(ctx co
 	return fc, nil
 }
 
+func (ec *executionContext) _GetCatalogResponse_services(ctx context.Context, field graphql.CollectedField, obj *catalog.GetCatalogResponse) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_GetCatalogResponse_services(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Services, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*catalog.Service)
+	fc.Result = res
+	return ec.marshalNService2ᚕᚖgraphᚑgatewayᚋprotosᚋcatalogᚐServiceᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_GetCatalogResponse_services(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "GetCatalogResponse",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Service_id(ctx, field)
+			case "provider_id":
+				return ec.fieldContext_Service_provider_id(ctx, field)
+			case "service_type_id":
+				return ec.fieldContext_Service_service_type_id(ctx, field)
+			case "name":
+				return ec.fieldContext_Service_name(ctx, field)
+			case "description":
+				return ec.fieldContext_Service_description(ctx, field)
+			case "default_duration":
+				return ec.fieldContext_Service_default_duration(ctx, field)
+			case "price":
+				return ec.fieldContext_Service_price(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Service", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Label_id(ctx context.Context, field graphql.CollectedField, obj *schedule.Label) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Label_id(ctx, field)
 	if err != nil {
@@ -3782,6 +4414,263 @@ func (ec *executionContext) fieldContext_Mutation_SendMessageFromConsole(ctx con
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_SendMessageFromConsole_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_AddService(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_AddService(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().AddService(rctx, fc.Args["input"].(*catalog.AddServiceRequest))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*catalog.Service)
+	fc.Result = res
+	return ec.marshalNService2ᚖgraphᚑgatewayᚋprotosᚋcatalogᚐService(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_AddService(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Service_id(ctx, field)
+			case "provider_id":
+				return ec.fieldContext_Service_provider_id(ctx, field)
+			case "service_type_id":
+				return ec.fieldContext_Service_service_type_id(ctx, field)
+			case "name":
+				return ec.fieldContext_Service_name(ctx, field)
+			case "description":
+				return ec.fieldContext_Service_description(ctx, field)
+			case "default_duration":
+				return ec.fieldContext_Service_default_duration(ctx, field)
+			case "price":
+				return ec.fieldContext_Service_price(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Service", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_AddService_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_EditService(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_EditService(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().EditService(rctx, fc.Args["input"].(*catalog.EditServiceRequest))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*catalog.Service)
+	fc.Result = res
+	return ec.marshalNService2ᚖgraphᚑgatewayᚋprotosᚋcatalogᚐService(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_EditService(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Service_id(ctx, field)
+			case "provider_id":
+				return ec.fieldContext_Service_provider_id(ctx, field)
+			case "service_type_id":
+				return ec.fieldContext_Service_service_type_id(ctx, field)
+			case "name":
+				return ec.fieldContext_Service_name(ctx, field)
+			case "description":
+				return ec.fieldContext_Service_description(ctx, field)
+			case "default_duration":
+				return ec.fieldContext_Service_default_duration(ctx, field)
+			case "price":
+				return ec.fieldContext_Service_price(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Service", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_EditService_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_DeleteService(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_DeleteService(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().DeleteService(rctx, fc.Args["input"].(*catalog.DeleteServiceRequest))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOEmpty2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_DeleteService(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Empty does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_DeleteService_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_SetClientPrice(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_SetClientPrice(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().SetClientPrice(rctx, fc.Args["input"].(*catalog.SetClientPriceRequest))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*catalog.ClientPrice)
+	fc.Result = res
+	return ec.marshalNClientPrice2ᚖgraphᚑgatewayᚋprotosᚋcatalogᚐClientPrice(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_SetClientPrice(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "client_id":
+				return ec.fieldContext_ClientPrice_client_id(ctx, field)
+			case "service_id":
+				return ec.fieldContext_ClientPrice_service_id(ctx, field)
+			case "price":
+				return ec.fieldContext_ClientPrice_price(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ClientPrice", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_SetClientPrice_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -4620,6 +5509,189 @@ func (ec *executionContext) fieldContext_Query_RequestAppointment(ctx context.Co
 	return fc, nil
 }
 
+func (ec *executionContext) _Query_GetCatalog(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_GetCatalog(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().GetCatalog(rctx, fc.Args["input"].(*catalog.GetCatalogRequest))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*catalog.GetCatalogResponse)
+	fc.Result = res
+	return ec.marshalNGetCatalogResponse2ᚖgraphᚑgatewayᚋprotosᚋcatalogᚐGetCatalogResponse(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_GetCatalog(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "services":
+				return ec.fieldContext_GetCatalogResponse_services(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type GetCatalogResponse", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_GetCatalog_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_GetClientPrice(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_GetClientPrice(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().GetClientPrice(rctx, fc.Args["input"].(*catalog.GetClientPriceRequest))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*catalog.ClientPrice)
+	fc.Result = res
+	return ec.marshalNClientPrice2ᚖgraphᚑgatewayᚋprotosᚋcatalogᚐClientPrice(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_GetClientPrice(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "client_id":
+				return ec.fieldContext_ClientPrice_client_id(ctx, field)
+			case "service_id":
+				return ec.fieldContext_ClientPrice_service_id(ctx, field)
+			case "price":
+				return ec.fieldContext_ClientPrice_price(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ClientPrice", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_GetClientPrice_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_GetAppointmentCharge(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_GetAppointmentCharge(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().GetAppointmentCharge(rctx, fc.Args["input"].(*catalog.GetAppointmentChargeRequest))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*catalog.AppointmentCharge)
+	fc.Result = res
+	return ec.marshalNAppointmentCharge2ᚖgraphᚑgatewayᚋprotosᚋcatalogᚐAppointmentCharge(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_GetAppointmentCharge(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "appointment_id":
+				return ec.fieldContext_AppointmentCharge_appointment_id(ctx, field)
+			case "appointment_charge":
+				return ec.fieldContext_AppointmentCharge_appointment_charge(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type AppointmentCharge", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_GetAppointmentCharge_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Query___type(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Query___type(ctx, field)
 	if err != nil {
@@ -5104,6 +6176,314 @@ func (ec *executionContext) fieldContext_RecipientAttributes_attribute_value(ctx
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Service_id(ctx context.Context, field graphql.CollectedField, obj *catalog.Service) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Service_id(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Id, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int64)
+	fc.Result = res
+	return ec.marshalNID2int64(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Service_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Service",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Service_provider_id(ctx context.Context, field graphql.CollectedField, obj *catalog.Service) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Service_provider_id(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ProviderId, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int64)
+	fc.Result = res
+	return ec.marshalNID2int64(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Service_provider_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Service",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Service_service_type_id(ctx context.Context, field graphql.CollectedField, obj *catalog.Service) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Service_service_type_id(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ServiceTypeId, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int64)
+	fc.Result = res
+	return ec.marshalNID2int64(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Service_service_type_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Service",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Service_name(ctx context.Context, field graphql.CollectedField, obj *catalog.Service) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Service_name(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Name, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Service_name(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Service",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Service_description(ctx context.Context, field graphql.CollectedField, obj *catalog.Service) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Service_description(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Description, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Service_description(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Service",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Service_default_duration(ctx context.Context, field graphql.CollectedField, obj *catalog.Service) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Service_default_duration(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.DefaultDuration, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int64)
+	fc.Result = res
+	return ec.marshalNInt2int64(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Service_default_duration(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Service",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Service_price(ctx context.Context, field graphql.CollectedField, obj *catalog.Service) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Service_price(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Service().Price(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(float64)
+	fc.Result = res
+	return ec.marshalNFloat2float64(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Service_price(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Service",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Float does not have child fields")
 		},
 	}
 	return fc, nil
@@ -7239,6 +8619,73 @@ func (ec *executionContext) unmarshalInputAddAppointmentRequest(ctx context.Cont
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputAddServiceRequest(ctx context.Context, obj interface{}) (catalog.AddServiceRequest, error) {
+	var it catalog.AddServiceRequest
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"service_type_id", "name", "description", "default_duration", "price"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "service_type_id":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("service_type_id"))
+			data, err := ec.unmarshalNID2int64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ServiceTypeId = data
+		case "name":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Name = data
+		case "description":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Description = data
+		case "default_duration":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("default_duration"))
+			data, err := ec.unmarshalNInt2int64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.DefaultDuration = data
+		case "price":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("price"))
+			data, err := ec.unmarshalNFloat2float64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			if err = ec.resolvers.AddServiceRequest().Price(ctx, &it, data); err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputAppointmentInput(ctx context.Context, obj interface{}) (schedule.AppointmentInput, error) {
 	var it schedule.AppointmentInput
 	asMap := map[string]interface{}{}
@@ -7895,6 +9342,111 @@ func (ec *executionContext) unmarshalInputDaySummaryInput(ctx context.Context, o
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputDeleteServiceRequest(ctx context.Context, obj interface{}) (catalog.DeleteServiceRequest, error) {
+	var it catalog.DeleteServiceRequest
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"service_id"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "service_id":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("service_id"))
+			data, err := ec.unmarshalNID2int64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ServiceId = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputEditServiceRequest(ctx context.Context, obj interface{}) (catalog.EditServiceRequest, error) {
+	var it catalog.EditServiceRequest
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"service_id", "service_type_id", "name", "description", "default_duration", "price"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "service_id":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("service_id"))
+			data, err := ec.unmarshalNID2int64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ServiceId = data
+		case "service_type_id":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("service_type_id"))
+			data, err := ec.unmarshalNID2int64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ServiceTypeId = data
+		case "name":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Name = data
+		case "description":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Description = data
+		case "default_duration":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("default_duration"))
+			data, err := ec.unmarshalNInt2int64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.DefaultDuration = data
+		case "price":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("price"))
+			data, err := ec.unmarshalNFloat2float64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			if err = ec.resolvers.EditServiceRequest().Price(ctx, &it, data); err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputError(ctx context.Context, obj interface{}) (comms.Error, error) {
 	var it comms.Error
 	asMap := map[string]interface{}{}
@@ -7927,6 +9479,111 @@ func (ec *executionContext) unmarshalInputError(ctx context.Context, obj interfa
 				return it, err
 			}
 			it.Description = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputGetAppointmentChargeRequest(ctx context.Context, obj interface{}) (catalog.GetAppointmentChargeRequest, error) {
+	var it catalog.GetAppointmentChargeRequest
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"appointment_id", "end_datetime"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "appointment_id":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("appointment_id"))
+			data, err := ec.unmarshalNID2int64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.AppointmentId = data
+		case "end_datetime":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("end_datetime"))
+			data, err := ec.unmarshalNInt2int64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.EndDatetime = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputGetCatalogRequest(ctx context.Context, obj interface{}) (catalog.GetCatalogRequest, error) {
+	var it catalog.GetCatalogRequest
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"provider_id"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "provider_id":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("provider_id"))
+			data, err := ec.unmarshalNID2int64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ProviderId = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputGetClientPriceRequest(ctx context.Context, obj interface{}) (catalog.GetClientPriceRequest, error) {
+	var it catalog.GetClientPriceRequest
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"client_id", "service_id"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "client_id":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("client_id"))
+			data, err := ec.unmarshalNID2int64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ClientId = data
+		case "service_id":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("service_id"))
+			data, err := ec.unmarshalNID2int64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ServiceId = data
 		}
 	}
 
@@ -8585,6 +10242,55 @@ func (ec *executionContext) unmarshalInputServiceTypeInput(ctx context.Context, 
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputSetClientPriceRequest(ctx context.Context, obj interface{}) (catalog.SetClientPriceRequest, error) {
+	var it catalog.SetClientPriceRequest
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"client_id", "service_id", "price"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "client_id":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("client_id"))
+			data, err := ec.unmarshalNID2int64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ClientId = data
+		case "service_id":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("service_id"))
+			data, err := ec.unmarshalNID2int64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ServiceId = data
+		case "price":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("price"))
+			data, err := ec.unmarshalNFloat2float64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			if err = ec.resolvers.SetClientPriceRequest().Price(ctx, &it, data); err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputUpdateCalendarRequest(ctx context.Context, obj interface{}) (schedule.UpdateCalendarRequest, error) {
 	var it schedule.UpdateCalendarRequest
 	asMap := map[string]interface{}{}
@@ -8756,6 +10462,81 @@ func (ec *executionContext) _Appointment(ctx context.Context, sel ast.SelectionS
 	return out
 }
 
+var appointmentChargeImplementors = []string{"AppointmentCharge"}
+
+func (ec *executionContext) _AppointmentCharge(ctx context.Context, sel ast.SelectionSet, obj *catalog.AppointmentCharge) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, appointmentChargeImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("AppointmentCharge")
+		case "appointment_id":
+			out.Values[i] = ec._AppointmentCharge_appointment_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "appointment_charge":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._AppointmentCharge_appointment_charge(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var appointmentTypeSummaryImplementors = []string{"AppointmentTypeSummary"}
 
 func (ec *executionContext) _AppointmentTypeSummary(ctx context.Context, sel ast.SelectionSet, obj *schedule.AppointmentTypeSummary) graphql.Marshaler {
@@ -8777,6 +10558,86 @@ func (ec *executionContext) _AppointmentTypeSummary(ctx context.Context, sel ast
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var clientPriceImplementors = []string{"ClientPrice"}
+
+func (ec *executionContext) _ClientPrice(ctx context.Context, sel ast.SelectionSet, obj *catalog.ClientPrice) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, clientPriceImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ClientPrice")
+		case "client_id":
+			out.Values[i] = ec._ClientPrice_client_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "service_id":
+			out.Values[i] = ec._ClientPrice_service_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "price":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._ClientPrice_price(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -9227,6 +11088,45 @@ func (ec *executionContext) _DaySummary(ctx context.Context, sel ast.SelectionSe
 	return out
 }
 
+var getCatalogResponseImplementors = []string{"GetCatalogResponse"}
+
+func (ec *executionContext) _GetCatalogResponse(ctx context.Context, sel ast.SelectionSet, obj *catalog.GetCatalogResponse) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, getCatalogResponseImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("GetCatalogResponse")
+		case "services":
+			out.Values[i] = ec._GetCatalogResponse_services(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var labelImplementors = []string{"Label"}
 
 func (ec *executionContext) _Label(ctx context.Context, sel ast.SelectionSet, obj *schedule.Label) graphql.Marshaler {
@@ -9405,6 +11305,31 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "SendMessageFromConsole":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_SendMessageFromConsole(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "AddService":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_AddService(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "EditService":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_EditService(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "DeleteService":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_DeleteService(ctx, field)
+			})
+		case "SetClientPrice":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_SetClientPrice(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
@@ -9709,6 +11634,72 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "GetCatalog":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_GetCatalog(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "GetClientPrice":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_GetClientPrice(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "GetAppointmentCharge":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_GetAppointmentCharge(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "__type":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Query___type(ctx, field)
@@ -9825,6 +11816,106 @@ func (ec *executionContext) _RecipientAttributes(ctx context.Context, sel ast.Se
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var serviceImplementors = []string{"Service"}
+
+func (ec *executionContext) _Service(ctx context.Context, sel ast.SelectionSet, obj *catalog.Service) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, serviceImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Service")
+		case "id":
+			out.Values[i] = ec._Service_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "provider_id":
+			out.Values[i] = ec._Service_provider_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "service_type_id":
+			out.Values[i] = ec._Service_service_type_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "name":
+			out.Values[i] = ec._Service_name(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "description":
+			out.Values[i] = ec._Service_description(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "default_duration":
+			out.Values[i] = ec._Service_default_duration(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "price":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Service_price(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -10330,6 +12421,20 @@ func (ec *executionContext) marshalNAppointment2ᚖgraphᚑgatewayᚋprotosᚋsc
 	return ec._Appointment(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalNAppointmentCharge2graphᚑgatewayᚋprotosᚋcatalogᚐAppointmentCharge(ctx context.Context, sel ast.SelectionSet, v catalog.AppointmentCharge) graphql.Marshaler {
+	return ec._AppointmentCharge(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNAppointmentCharge2ᚖgraphᚑgatewayᚋprotosᚋcatalogᚐAppointmentCharge(ctx context.Context, sel ast.SelectionSet, v *catalog.AppointmentCharge) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._AppointmentCharge(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalNAppointmentInput2ᚖgraphᚑgatewayᚋprotosᚋscheduleᚐAppointmentInput(ctx context.Context, v interface{}) (*schedule.AppointmentInput, error) {
 	res, err := ec.unmarshalInputAppointmentInput(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
@@ -10473,6 +12578,20 @@ func (ec *executionContext) unmarshalNChannelStatuses2ᚕᚖgraphᚑgatewayᚋgr
 func (ec *executionContext) unmarshalNChannelStatuses2ᚖgraphᚑgatewayᚋgraphᚋmodelᚐChannelStatuses(ctx context.Context, v interface{}) (*model.ChannelStatuses, error) {
 	res, err := ec.unmarshalInputChannelStatuses(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNClientPrice2graphᚑgatewayᚋprotosᚋcatalogᚐClientPrice(ctx context.Context, sel ast.SelectionSet, v catalog.ClientPrice) graphql.Marshaler {
+	return ec._ClientPrice(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNClientPrice2ᚖgraphᚑgatewayᚋprotosᚋcatalogᚐClientPrice(ctx context.Context, sel ast.SelectionSet, v *catalog.ClientPrice) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._ClientPrice(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNCommsAppointment2graphᚑgatewayᚋprotosᚋcommsᚐCommsAppointment(ctx context.Context, sel ast.SelectionSet, v comms.CommsAppointment) graphql.Marshaler {
@@ -10716,6 +12835,35 @@ func (ec *executionContext) unmarshalNError2ᚕᚖgraphᚑgatewayᚋprotosᚋcom
 func (ec *executionContext) unmarshalNError2ᚖgraphᚑgatewayᚋprotosᚋcommsᚐError(ctx context.Context, v interface{}) (*comms.Error, error) {
 	res, err := ec.unmarshalInputError(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNFloat2float64(ctx context.Context, v interface{}) (float64, error) {
+	res, err := graphql.UnmarshalFloatContext(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNFloat2float64(ctx context.Context, sel ast.SelectionSet, v float64) graphql.Marshaler {
+	res := graphql.MarshalFloatContext(v)
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return graphql.WrapContextMarshaler(ctx, res)
+}
+
+func (ec *executionContext) marshalNGetCatalogResponse2graphᚑgatewayᚋprotosᚋcatalogᚐGetCatalogResponse(ctx context.Context, sel ast.SelectionSet, v catalog.GetCatalogResponse) graphql.Marshaler {
+	return ec._GetCatalogResponse(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNGetCatalogResponse2ᚖgraphᚑgatewayᚋprotosᚋcatalogᚐGetCatalogResponse(ctx context.Context, sel ast.SelectionSet, v *catalog.GetCatalogResponse) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._GetCatalogResponse(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNID2int64(ctx context.Context, v interface{}) (int64, error) {
@@ -11142,6 +13290,64 @@ func (ec *executionContext) unmarshalNRecipientInput2ᚖgraphᚑgatewayᚋprotos
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
+func (ec *executionContext) marshalNService2graphᚑgatewayᚋprotosᚋcatalogᚐService(ctx context.Context, sel ast.SelectionSet, v catalog.Service) graphql.Marshaler {
+	return ec._Service(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNService2ᚕᚖgraphᚑgatewayᚋprotosᚋcatalogᚐServiceᚄ(ctx context.Context, sel ast.SelectionSet, v []*catalog.Service) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNService2ᚖgraphᚑgatewayᚋprotosᚋcatalogᚐService(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNService2ᚖgraphᚑgatewayᚋprotosᚋcatalogᚐService(ctx context.Context, sel ast.SelectionSet, v *catalog.Service) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._Service(ctx, sel, v)
+}
+
 func (ec *executionContext) marshalNServiceType2ᚕᚖgraphᚑgatewayᚋprotosᚋscheduleᚐServiceTypeᚄ(ctx context.Context, sel ast.SelectionSet, v []*schedule.ServiceType) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
@@ -11553,6 +13759,14 @@ func (ec *executionContext) unmarshalOAddAppointmentRequest2ᚖgraphᚑgateway�
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
+func (ec *executionContext) unmarshalOAddServiceRequest2ᚖgraphᚑgatewayᚋprotosᚋcatalogᚐAddServiceRequest(ctx context.Context, v interface{}) (*catalog.AddServiceRequest, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputAddServiceRequest(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) unmarshalOBoolean2bool(ctx context.Context, v interface{}) (bool, error) {
 	res, err := graphql.UnmarshalBoolean(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -11619,6 +13833,22 @@ func (ec *executionContext) unmarshalODayInput2ᚖgraphᚑgatewayᚋprotosᚋsch
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
+func (ec *executionContext) unmarshalODeleteServiceRequest2ᚖgraphᚑgatewayᚋprotosᚋcatalogᚐDeleteServiceRequest(ctx context.Context, v interface{}) (*catalog.DeleteServiceRequest, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputDeleteServiceRequest(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalOEditServiceRequest2ᚖgraphᚑgatewayᚋprotosᚋcatalogᚐEditServiceRequest(ctx context.Context, v interface{}) (*catalog.EditServiceRequest, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputEditServiceRequest(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) unmarshalOEmpty2ᚖstring(ctx context.Context, v interface{}) (*string, error) {
 	if v == nil {
 		return nil, nil
@@ -11633,6 +13863,30 @@ func (ec *executionContext) marshalOEmpty2ᚖstring(ctx context.Context, sel ast
 	}
 	res := graphql.MarshalString(*v)
 	return res
+}
+
+func (ec *executionContext) unmarshalOGetAppointmentChargeRequest2ᚖgraphᚑgatewayᚋprotosᚋcatalogᚐGetAppointmentChargeRequest(ctx context.Context, v interface{}) (*catalog.GetAppointmentChargeRequest, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputGetAppointmentChargeRequest(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalOGetCatalogRequest2ᚖgraphᚑgatewayᚋprotosᚋcatalogᚐGetCatalogRequest(ctx context.Context, v interface{}) (*catalog.GetCatalogRequest, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputGetCatalogRequest(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalOGetClientPriceRequest2ᚖgraphᚑgatewayᚋprotosᚋcatalogᚐGetClientPriceRequest(ctx context.Context, v interface{}) (*catalog.GetClientPriceRequest, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputGetClientPriceRequest(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) unmarshalOIncomingSMSCallbackRequest2ᚖgraphᚑgatewayᚋprotosᚋcommsᚐIncomingSMSCallbackRequest(ctx context.Context, v interface{}) (*comms.IncomingSMSCallbackRequest, error) {
@@ -11672,6 +13926,14 @@ func (ec *executionContext) unmarshalORejectedAppointmentInput2ᚖgraphᚑgatewa
 		return nil, nil
 	}
 	res, err := ec.unmarshalInputRejectedAppointmentInput(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalOSetClientPriceRequest2ᚖgraphᚑgatewayᚋprotosᚋcatalogᚐSetClientPriceRequest(ctx context.Context, v interface{}) (*catalog.SetClientPriceRequest, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputSetClientPriceRequest(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 

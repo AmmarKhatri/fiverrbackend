@@ -40,3 +40,16 @@ services:
     deploy:
       mode: replicated
       replicas: 1
+
+  catalog-service:
+    build:
+      context: ./../catalog-service
+      dockerfile: ./../catalog-service/catalog-service.dockerfile
+    restart: always
+    ports:
+      - "50003:50003"
+    env_file:
+      - ./../catalog-service/.env
+    deploy:
+      mode: replicated
+      replicas: 1

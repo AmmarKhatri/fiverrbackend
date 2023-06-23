@@ -8,6 +8,10 @@ type Query{
     ProcessIncomingSMSCallback(input: IncomingSMSCallbackRequest): Empty
     ProcessMultiChannelCallback(input: MultiChannelCallbackRequest): Empty
     RequestAppointment(input: CommsAppointmentInput): CommsPendingAppointment!
+    #catalog queries
+    GetCatalog(input: GetCatalogRequest): GetCatalogResponse!
+    GetClientPrice(input: GetClientPriceRequest): ClientPrice!
+    GetAppointmentCharge(input: GetAppointmentChargeRequest): AppointmentCharge!
 }
 
 type Mutation {
@@ -19,4 +23,9 @@ type Mutation {
     AcceptedAppointment(input: AcceptedAppointmentInput): CommsAppointment!
     RejectedAppointment(input: RejectedAppointmentInput): Empty
     SendMessageFromConsole(input: ConsoleMessageInput): ConsoleMessage!
+    #catalog mutations
+    AddService(input: AddServiceRequest): Service!
+    EditService(input: EditServiceRequest): Service!
+    DeleteService(input: DeleteServiceRequest): Empty
+    SetClientPrice(input: SetClientPriceRequest): ClientPrice!
 }

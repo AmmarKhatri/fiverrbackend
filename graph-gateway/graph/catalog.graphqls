@@ -1,0 +1,65 @@
+type Service {
+    id: ID!
+    provider_id: ID!
+    service_type_id: ID!
+    name: String!
+    description: String!
+    default_duration: Int!
+    price: Float!
+}
+
+input GetCatalogRequest {
+    provider_id: ID!
+}
+
+type GetCatalogResponse {
+    services: [Service!]!
+}
+
+input AddServiceRequest {
+    service_type_id: ID!
+    name: String!
+    description: String!
+    default_duration: Int!
+    price: Float!
+}
+
+input EditServiceRequest {
+    service_id: ID!
+    service_type_id: ID!
+    name: String!
+    description: String!
+    default_duration: Int!
+    price: Float!
+}
+
+input DeleteServiceRequest {
+    service_id: ID!
+}
+
+input SetClientPriceRequest {
+    client_id: ID!
+    service_id: ID!
+    price: Float!
+}
+
+input GetClientPriceRequest {
+    client_id: ID!
+    service_id: ID!
+}
+
+input GetAppointmentChargeRequest {
+    appointment_id: ID!
+    end_datetime: Int!
+}
+
+type AppointmentCharge {
+    appointment_id: ID!
+    appointment_charge: Float!
+}
+
+type ClientPrice {
+    client_id: ID!
+    service_id: ID!
+    price: Float!
+}

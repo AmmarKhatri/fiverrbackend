@@ -11,6 +11,9 @@
 		},
 		{
 			"path": "comms-service"
+		},
+		{
+			"path": "catalog-service"
 		}
 	],
 	"settings": {}

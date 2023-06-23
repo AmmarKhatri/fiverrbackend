@@ -20,3 +20,11 @@ func CommsConnection() (*grpc.ClientConn, error) {
 	}
 	return conn, err
 }
+
+func CatalogConnection() (*grpc.ClientConn, error) {
+	conn, err := grpc.Dial("catalog-service:50003", grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
+	if err != nil {
+		return nil, err
+	}
+	return conn, err
+}

@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"graph-gateway/graph/helpers"
+	"graph-gateway/protos/catalog"
 	"graph-gateway/protos/comms"
 	"graph-gateway/protos/schedule"
 )
@@ -107,6 +108,74 @@ func (r *mutationResolver) SendMessageFromConsole(ctx context.Context, input *co
 	defer conn.Close()
 	c := comms.NewCommunicatorClient(conn)
 	res, err := c.SendMessageFromConsole(ctx, input)
+	if err != nil {
+		fmt.Println("Error getting response and calling function")
+		return nil, err
+	}
+	return res, nil
+}
+
+// AddService is the resolver for the AddService field.
+func (r *mutationResolver) AddService(ctx context.Context, input *catalog.AddServiceRequest) (*catalog.Service, error) {
+	conn, err := helpers.CatalogConnection()
+	if err != nil {
+		fmt.Println("Error connecting to the client")
+		return nil, err
+	}
+	defer conn.Close()
+	c := catalog.NewCatalogClient(conn)
+	res, err := c.AddService(ctx, input)
+	if err != nil {
+		fmt.Println("Error getting response and calling function")
+		return nil, err
+	}
+	return res, nil
+}
+
+// EditService is the resolver for the EditService field.
+func (r *mutationResolver) EditService(ctx context.Context, input *catalog.EditServiceRequest) (*catalog.Service, error) {
+	conn, err := helpers.CatalogConnection()
+	if err != nil {
+		fmt.Println("Error connecting to the client")
+		return nil, err
+	}
+	defer conn.Close()
+	c := catalog.NewCatalogClient(conn)
+	res, err := c.EditService(ctx, input)
+	if err != nil {
+		fmt.Println("Error getting response and calling function")
+		return nil, err
+	}
+	return res, nil
+}
+
+// DeleteService is the resolver for the DeleteService field.
+func (r *mutationResolver) DeleteService(ctx context.Context, input *catalog.DeleteServiceRequest) (*string, error) {
+	conn, err := helpers.CatalogConnection()
+	if err != nil {
+		fmt.Println("Error connecting to the client")
+		return nil, err
+	}
+	defer conn.Close()
+	c := catalog.NewCatalogClient(conn)
+	_, err = c.DeleteService(ctx, input)
+	if err != nil {
+		fmt.Println("Error getting response and calling function")
+		return nil, err
+	}
+	return nil, nil
+}
+
+// SetClientPrice is the resolver for the SetClientPrice field.
+func (r *mutationResolver) SetClientPrice(ctx context.Context, input *catalog.SetClientPriceRequest) (*catalog.ClientPrice, error) {
+	conn, err := helpers.CatalogConnection()
+	if err != nil {
+		fmt.Println("Error connecting to the client")
+		return nil, err
+	}
+	defer conn.Close()
+	c := catalog.NewCatalogClient(conn)
+	res, err := c.SetClientPrice(ctx, input)
 	if err != nil {
 		fmt.Println("Error getting response and calling function")
 		return nil, err
@@ -226,6 +295,57 @@ func (r *queryResolver) RequestAppointment(ctx context.Context, input *comms.Com
 	defer conn.Close()
 	c := comms.NewCommunicatorClient(conn)
 	res, err := c.RequestAppointment(ctx, input)
+	if err != nil {
+		fmt.Println("Error getting response and calling function")
+		return nil, err
+	}
+	return res, nil
+}
+
+// GetCatalog is the resolver for the GetCatalog field.
+func (r *queryResolver) GetCatalog(ctx context.Context, input *catalog.GetCatalogRequest) (*catalog.GetCatalogResponse, error) {
+	conn, err := helpers.CatalogConnection()
+	if err != nil {
+		fmt.Println("Error connecting to the client")
+		return nil, err
+	}
+	defer conn.Close()
+	c := catalog.NewCatalogClient(conn)
+	res, err := c.GetCatalog(ctx, input)
+	if err != nil {
+		fmt.Println("Error getting response and calling function")
+		return nil, err
+	}
+	return res, nil
+}
+
+// GetClientPrice is the resolver for the GetClientPrice field.
+func (r *queryResolver) GetClientPrice(ctx context.Context, input *catalog.GetClientPriceRequest) (*catalog.ClientPrice, error) {
+	conn, err := helpers.CatalogConnection()
+	if err != nil {
+		fmt.Println("Error connecting to the client")
+		return nil, err
+	}
+	defer conn.Close()
+	c := catalog.NewCatalogClient(conn)
+	res, err := c.GetClientPrice(ctx, input)
+	if err != nil {
+		fmt.Println("Error getting response and calling function")
+		return nil, err
+	}
+	return res, nil
+}
+
+// GetAppointmentCharge is the resolver for the GetAppointmentCharge field.
+func (r *queryResolver) GetAppointmentCharge(ctx context.Context, input *catalog.GetAppointmentChargeRequest) (*catalog.AppointmentCharge, error) {
+	conn, err := helpers.CatalogConnection()
+	if err != nil {
+		fmt.Println("Error connecting to the client")
+		return nil, err
+	}
+	defer conn.Close()
+	c := catalog.NewCatalogClient(conn)
+	res, err := c.GetAppointmentCharge(ctx, input)
 	if err != nil {
 		fmt.Println("Error getting response and calling function")
 		return nil, err

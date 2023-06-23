@@ -65,6 +65,7 @@ resolver:
 autobind:
   - "graph-gateway/protos/schedule"
   - "graph-gateway/protos/comms"
+  - "graph-gateway/protos/catalog"
 
 # This section declares type mapping between the GraphQL and go type systems
 #

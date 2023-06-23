@@ -1,5 +1,6 @@
 SCHEDULER_BINARY=schedulerApp
 GRAPH_BINARY=graphApp
+CATALOG_BINARY=catalogApp
 
 ## up: starts all containers in the background without forcing build
 up:
@@ -7,7 +8,7 @@ up:
 	docker-compose up -d
 	@echo "Docker images started!"
 
-up_build: build_graph build_scheduler
+up_build: build_graph build_scheduler build_catalog
 	@echo "Stopping docker images (if running...)"
 	docker-compose down
 	@echo "Building (when required) and starting docker images..."
@@ -26,8 +27,14 @@ build_graph:
 	cd ../graph-gateway && env GOOS=linux CGO_ENABLED=0 go build -o ${GRAPH_BINARY} .
 	@echo "Done!"
 
-## build_post: builds the post binary as a linux executable
+## build_scheduler: builds the scheduler binary as a linux executable
 build_scheduler:
 	@echo "Building scheduler binary..."
 	cd ../scheduler-service && env GOOS=linux CGO_ENABLED=0 go build -o ${SCHEDULER_BINARY} .
+	@echo "Done!"
+
+## build_catalog: builds the catalog binary as a linux executable
+build_catalog:
+	@echo "Building catalog binary..."
+	cd ../catalog-service && env GOOS=linux CGO_ENABLED=0 go build -o ${CATALOG_BINARY}
 	@echo "Done!"
