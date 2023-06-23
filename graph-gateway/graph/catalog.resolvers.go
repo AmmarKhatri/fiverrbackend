@@ -7,21 +7,37 @@ package graph
 import (
 	"context"
 	"graph-gateway/protos/catalog"
+	"strconv"
 )
 
 // AppointmentCharge is the resolver for the appointment_charge field.
 func (r *appointmentChargeResolver) AppointmentCharge(ctx context.Context, obj *catalog.AppointmentCharge) (float64, error) {
-	return float64(obj.AppointmentCharge), nil
+	priceStr := strconv.FormatFloat(float64(obj.AppointmentCharge), 'f', 2, 32)
+	price, err := strconv.ParseFloat(priceStr, 64)
+	if err != nil {
+		return 0, err
+	}
+	return price, nil
 }
 
 // Price is the resolver for the price field.
 func (r *clientPriceResolver) Price(ctx context.Context, obj *catalog.ClientPrice) (float64, error) {
-	return float64(obj.Price), nil
+	priceStr := strconv.FormatFloat(float64(obj.Price), 'f', 2, 32)
+	price, err := strconv.ParseFloat(priceStr, 64)
+	if err != nil {
+		return 0, err
+	}
+	return price, nil
 }
 
 // Price is the resolver for the price field.
 func (r *serviceResolver) Price(ctx context.Context, obj *catalog.Service) (float64, error) {
-	return float64(obj.Price), nil
+	priceStr := strconv.FormatFloat(float64(obj.Price), 'f', 2, 32)
+	price, err := strconv.ParseFloat(priceStr, 64)
+	if err != nil {
+		return 0, err
+	}
+	return price, nil
 }
 
 // Price is the resolver for the price field.
