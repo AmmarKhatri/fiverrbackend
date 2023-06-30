@@ -53,3 +53,15 @@ services:
     deploy:
       mode: replicated
       replicas: 1
+  account-service:
+    build:
+      context: ./../account-service
+      dockerfile: ./../account-service/account-service.dockerfile
+    restart: always
+    ports:
+      - "50004:50004"
+    env_file:
+      - ./../account-service/.env
+    deploy:
+      mode: replicated
+      replicas: 1

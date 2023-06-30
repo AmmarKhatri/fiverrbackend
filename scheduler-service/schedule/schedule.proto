@@ -3,193 +3,83 @@ syntax = "proto3";
 package schedule;
 option go_package = "/schedule";
 import "google/protobuf/empty.proto";
-// A Label resource
+import "schedule/lesserknown/date.proto";
+import "schedule/lesserknown/color.proto";
+
 message Label {
-    // a unique label id
     int64 id = 1;
     string label_text = 2;
-    string label_color = 3; 
+    google.type.Color label_color = 3; 
 }
 
 message LabelInput {
     int64 id = 1;
     string label_text = 2;
-    string label_color = 3; 
-}
-
-message RecipientType {
-    int64 id = 1;
-    string name = 2;
-}
-message RecipientAttributes {
-    int64 recipient_type_id = 1;
-    string attribute_name = 2;
-    string attribute_value = 3;
-}
-
-message RecipientAttributesInput {
-    int64 recipient_type_id = 1;
-    string attribute_name = 2;
-    string attribute_value = 3;
+    google.type.Color label_color = 3; 
 }
 
 message Recipient {
     int64 id = 1;
-    int64 recipient_id = 2;
+    int64 caretaker_id = 2;
     string name = 3;
-    int64 recipient_type = 4;
-    repeated RecipientAttributes attributes = 5;
+    int64 recipient_type_id = 4;
 }
 
-message RecipientInput {
-    int64 id = 1;
-    int64 recipient_id = 2;
-    string name = 3;
-    int64 recipient_type = 4;
-    repeated RecipientAttributesInput attributes = 5;
-}
-
-message ServiceType {
-    int64 id = 1;
-    string label = 2;
-    string description = 3;
-    int64 base_price = 4;
-    int64 default_duration = 5;
-}
-
-message ServiceTypeInput {
-    int64 id = 1;
-    string label = 2;
-    string description = 3;
-    int64 base_price = 4;
-    int64 default_duration = 5;
-}
-
-message Customer {
-    int64 id = 1;
-    string name = 2;
-    string phone = 3;
-    string email = 4;
-    repeated Recipient recipients = 5;
-}
-
-message CustomerInput {
-    int64 id = 1;
-    string name = 2;
-    string phone = 3;
-    string email = 4;
-    repeated RecipientInput recipients = 5;
-}
-
-message CustomerPrice {
-    int64 id = 1;
-    Customer customer = 2;
-    ServiceType service_type = 4;
-    double customer_price = 5;    
-}
-message Provider {
-    int64 id = 1;
-    string name = 2;
-    string phone = 3;
-    string email = 4;
-    bool has_visible_calendar = 5;
-    repeated ServiceType service_types = 6;
-}
-
-message ProviderInput {
-    int64 id = 1;
-    string name = 2;
-    string phone = 3;
-    string email = 4;
-    bool has_visible_calendar = 5;
-    repeated ServiceTypeInput service_types = 6;
-}
 // An appointment resource
 message Appointment {
-    int64 appointment_id = 1;
-    Provider provider = 2;
-    Customer customer = 3;
-    ServiceType service_type = 4;
-    int64 startDate = 5;
-    int64 duration = 6;
-    repeated Day days = 7;
-}
-message AppointmentInput {
-    int64 appointment_id = 1;
-    ProviderInput provider = 2;
-    CustomerInput customer = 3;
-    ServiceTypeInput service_type = 4;
-    int64 startDate = 5;
-    int64 duration = 6;
-    repeated DayInput days = 7;
-}
-message AppointmentTypeSummary {
-    string icon = 1;
-    int64 total_appointments_per_type = 2;
+    int64 id = 1;
+    int64 provider_id = 2;
+    int64 customer_id = 3;
+    int64 service_id = 4;
+    string start_datetime = 5;
+    string end_datetime = 6;
+    repeated Recipient recipients = 7;
 }
 
-message AppointmentTypeSummaryInput {
+message ServiceSummary {
     string icon = 1;
-    int64 total_appointments_per_type = 2;
+    int64 total_appointments_for_service = 2;
+    int64 service_id = 3;
 }
 
 message DaySummary {
-    Provider provider = 1;
-    int64 day = 2;
-    repeated AppointmentTypeSummary appointment_summaries = 3;    
-}
-message DaySummaryInput {
-    ProviderInput provider = 1;
-    int64 day = 2;
-    repeated AppointmentTypeSummaryInput appointment_summaries = 3; 
+    int64 provider_id = 1;
+    google.type.Date calendar_date = 2;
+    repeated ServiceSummary count_by_service_type = 3;    
 }
 
-// A day resource
-message Day {
-    Provider provider = 1;
-    int64 calendar_date = 2;
-    bool is_available = 3;
-    repeated Label labels = 4;
-}
-message DayInput {
-    ProviderInput provider = 1;
-    int64 calendar_date = 2;
-    bool is_available = 3;
-    repeated LabelInput labels = 4;
-}
 message CustomerDay {
-    Day date = 1;
-    Appointment appointment = 2;
+    int64 provider_id = 1;
+    google.type.Date calendar_date = 2;
+    bool is_available = 3;
+    optional int64 appointment_id = 4;
 }
 
 message ProviderDay {
-    Day date = 1;
-    repeated Label labels = 2;
-    DaySummary day_summary = 3;    
+    int64 provider_id = 1;
+    google.type.Date calendar_date = 2;
+    bool is_available = 3;
+    repeated Label labels = 4;
+    DaySummary day_summary = 5;    
 }
+
 message ProviderDayInput {
-    DayInput date = 1;
-    repeated LabelInput labels = 2;
-    DaySummaryInput day_summary = 3;    
+    int64 provider_id = 1;
+    google.type.Date calendar_date = 2;
+    bool is_available = 3;
+    repeated LabelInput labels = 4;
 }
 
 message DayDetails {
-    Provider provider = 1;
-    string day = 2;
-    repeated Appointment appointments = 3;
+    google.type.Date calendar_date = 1;
+    repeated Appointment appointments = 2;
 }
 
 // A ListDaysRequest
 message ListDaysRequest {
-    // a unique calendar id
-    int64 id = 1;
-    ProviderInput provider = 2;
-
-    // the first day to return
-    int64 startDate = 3;
-
-    // the number of days to return
-    int64 length = 4;
+    int64 provider_id = 1;
+    google.type.Date start_date = 2;
+    int32 length = 3;
 }
 
 message ListProviderDaysResponse {
@@ -201,7 +91,6 @@ message ListCustomerDaysResponse {
 }
 
 message UpdateCalendarRequest {
-    ProviderInput provider = 1;
     repeated ProviderDayInput days = 2;
 }
 
@@ -210,14 +99,23 @@ message UpdateCalendarResponse {
 }
 
 message AddAppointmentRequest {
-    ProviderInput provider = 1;
-    AppointmentInput appointment = 2;
+    optional int64 appointment_id = 1;
+    int64 provider_id = 2;
+    int64 customer_id = 3;
+    int64 service_id = 4;
+    string start_datetime = 5;
+    string end_datetime = 6;
+    repeated int64 recipient_ids = 7;
 }
 
 message CancelAppointmentRequest {
     int64 appointment_id = 1;
+    string datetime_of_cancellation = 2;
 }
 
+message GetDayDetailsRequest {
+    google.type.Date calendar_date = 1;
+}
 
 service Scheduler {
     rpc ListProviderDays(ListDaysRequest) returns (ListProviderDaysResponse);
@@ -225,7 +123,7 @@ service Scheduler {
     rpc UpdateCalendar(UpdateCalendarRequest) returns (UpdateCalendarResponse);
     rpc AddAppointment(AddAppointmentRequest) returns (Appointment);
     rpc CancelAppointment(CancelAppointmentRequest) returns (google.protobuf.Empty);
-    rpc GetDayDetails(DayInput) returns (DayDetails);
+    rpc GetDayDetails(GetDayDetailsRequest) returns (DayDetails);
 }
 
 // usage:
