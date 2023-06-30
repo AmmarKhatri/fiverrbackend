@@ -2,7 +2,8 @@ type Query{
     #scheduler queries
     ListProviderDays(input: ListDaysRequest): ListProviderDaysResponse!
     ListCustomerDays(input: ListDaysRequest): ListCustomerDaysResponse!
-    GetDayDetails(input: DayInput): DayDetails!
+    GetDayDetails(input: GetDayDetailsRequest): DayDetails!
+
     #comms queries
     ProcessOutgoingCallback(input: OutgoingCallbackRequest): Empty
     ProcessIncomingSMSCallback(input: IncomingSMSCallbackRequest): Empty
@@ -12,6 +13,13 @@ type Query{
     GetCatalog(input: GetCatalogRequest): GetCatalogResponse!
     GetClientPrice(input: GetClientPriceRequest): ClientPrice!
     GetAppointmentCharge(input: GetAppointmentChargeRequest): AppointmentCharge!
+    #account queries
+    GetPublicProfileSection(input: GetPublicProfileSectionRequest): ProfileSectionResponse!
+    GetPrivateProfileSection(input: GetPrivateProfileSectionRequest): ProfileSectionResponse!
+    GetPrivateBasicUserInfo(input: Empty): PrivateBasicUserInfo!
+    GetPublicBasicUserInfo(input: GetPublicBasicUserInfoRequest): PublicBasicUserInfo!
+    GetCustomerReviews(input: GetCustomerReviewsRequest): GetCustomerReviewsResponse!
+
 }
 
 type Mutation {
@@ -19,6 +27,7 @@ type Mutation {
     UpdateCalendar(input: UpdateCalendarRequest): UpdateCalendarResponse!
     AddAppointment(input: AddAppointmentRequest): Appointment!
     CancelAppointment(input: CancelAppointmentRequest): Empty
+
     #comms mutations
     AcceptedAppointment(input: AcceptedAppointmentInput): CommsAppointment!
     RejectedAppointment(input: RejectedAppointmentInput): Empty
@@ -28,4 +37,8 @@ type Mutation {
     EditService(input: EditServiceRequest): Service!
     DeleteService(input: DeleteServiceRequest): Empty
     SetClientPrice(input: SetClientPriceRequest): ClientPrice!
+    #account mutations
+    UpdateProfileSection(input: UpdateProfileSectionRequest): ProfileSectionResponse!
+    UpdateBasicUserInfo(input: UpdatePrivateBasicUserInfoRequest): PrivateBasicUserInfo!
+    AddCustomerReview(input: AddCustomerReviewRequest): CustomerReview!
 }

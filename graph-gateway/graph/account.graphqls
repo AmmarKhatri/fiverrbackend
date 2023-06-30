@@ -1,0 +1,107 @@
+input GetPublicProfileSectionRequest {
+    user_id: ID
+    section: String!
+}
+
+type Attribute {
+    key: String!
+    value: String!
+}
+type ProfileSectionResponse {
+    user_id: ID
+    section: String!
+    is_private: Boolean!
+    attributes: [Attribute!]!
+}
+
+input GetPrivateProfileSectionRequest {
+    section: String!
+}
+input AttributeInput {
+    key: String!
+    value: String!
+}
+input UpdateProfileSectionRequest {
+    section: String!
+    attributes: [AttributeInput!]!
+}
+type PostalAddress {
+    revision: Int!
+    region_code: String!
+    language_code: String!
+    postal_code: String!
+    sorting_code: String!
+    administrative_area: String!
+    locality: String!
+    sublocality: String!
+    address_lines: [String!]!
+    recipients: [String!]!
+    organization: String!
+}
+type PrivateBasicUserInfo {
+    first_name: String
+    last_name: String
+    address: PostalAddress
+    email: String!
+    phone: String
+    profile_picture_url: String
+    bio: String
+}
+
+input GetPublicBasicUserInfoRequest {
+    user_id: ID
+}
+
+type PublicBasicUserInfo {
+    user_id: ID
+    first_name: String
+    last_initial: String
+    profile_picture_url: String
+    geo_location: String
+    address: PostalAddress
+    bio: String
+}
+input PostalAddressInput {
+    revision: Int!
+    region_code: String!
+    language_code: String!
+    postal_code: String!
+    sorting_code: String!
+    administrative_area: String!
+    locality: String!
+    sublocality: String!
+    address_lines: [String!]!
+    recipients: [String!]!
+    organization: String!
+}
+input UpdatePrivateBasicUserInfoRequest {
+    first_name: String
+    last_name: String
+    address: PostalAddressInput
+    email: String
+    phone: String
+    profile_picture_url: String
+    bio: String
+}
+
+input GetCustomerReviewsRequest {
+    provider_id: ID!
+}
+
+type GetCustomerReviewsResponse {
+    reviews: [CustomerReview!]!
+}
+
+input AddCustomerReviewRequest {
+    provider_id: ID!
+    review: String!
+    rating: Int!
+}
+
+type CustomerReview {
+    provider_id: ID!
+    customer_id: ID!
+    review: String!
+    rating: Int!
+    date_last_modified: String!
+}

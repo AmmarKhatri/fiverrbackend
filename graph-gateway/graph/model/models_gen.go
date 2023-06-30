@@ -6,7 +6,52 @@ import (
 	"graph-gateway/protos/comms"
 )
 
+type Attribute struct {
+	Key   string `json:"key"`
+	Value string `json:"value"`
+}
+
+type AttributeInput struct {
+	Key   string `json:"key"`
+	Value string `json:"value"`
+}
+
 type ChannelStatuses struct {
 	Key   string                `json:"key"`
 	Value *comms.CallbackStatus `json:"value"`
+}
+
+type ColorInput struct {
+	Red   float64          `json:"red"`
+	Green float64          `json:"green"`
+	Blue  float64          `json:"blue"`
+	Alpha *FloatValueInput `json:"alpha"`
+}
+
+type DateInput struct {
+	Year  int `json:"year"`
+	Month int `json:"month"`
+	Day   int `json:"day"`
+}
+
+type FloatValue struct {
+	Value float64 `json:"value"`
+}
+
+type FloatValueInput struct {
+	Value float64 `json:"value"`
+}
+
+type PostalAddressInput struct {
+	Revision           int      `json:"revision"`
+	RegionCode         string   `json:"region_code"`
+	LanguageCode       string   `json:"language_code"`
+	PostalCode         string   `json:"postal_code"`
+	SortingCode        string   `json:"sorting_code"`
+	AdministrativeArea string   `json:"administrative_area"`
+	Locality           string   `json:"locality"`
+	Sublocality        string   `json:"sublocality"`
+	AddressLines       []string `json:"address_lines"`
+	Recipients         []string `json:"recipients"`
+	Organization       string   `json:"organization"`
 }

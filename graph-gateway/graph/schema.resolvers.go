@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"graph-gateway/graph/helpers"
+	"graph-gateway/protos/account"
 	"graph-gateway/protos/catalog"
 	"graph-gateway/protos/comms"
 	"graph-gateway/protos/schedule"
@@ -183,6 +184,21 @@ func (r *mutationResolver) SetClientPrice(ctx context.Context, input *catalog.Se
 	return res, nil
 }
 
+// UpdateProfileSection is the resolver for the UpdateProfileSection field.
+func (r *mutationResolver) UpdateProfileSection(ctx context.Context, input *account.UpdateProfileSectionRequest) (*account.ProfileSectionResponse, error) {
+	panic(fmt.Errorf("not implemented: UpdateProfileSection - UpdateProfileSection"))
+}
+
+// UpdateBasicUserInfo is the resolver for the UpdateBasicUserInfo field.
+func (r *mutationResolver) UpdateBasicUserInfo(ctx context.Context, input *account.UpdatePrivateBasicUserInfoRequest) (*account.PrivateBasicUserInfo, error) {
+	panic(fmt.Errorf("not implemented: UpdateBasicUserInfo - UpdateBasicUserInfo"))
+}
+
+// AddCustomerReview is the resolver for the AddCustomerReview field.
+func (r *mutationResolver) AddCustomerReview(ctx context.Context, input *account.AddCustomerReviewRequest) (*account.CustomerReview, error) {
+	panic(fmt.Errorf("not implemented: AddCustomerReview - AddCustomerReview"))
+}
+
 // ListProviderDays is the resolver for the ListProviderDays field.
 func (r *queryResolver) ListProviderDays(ctx context.Context, input *schedule.ListDaysRequest) (*schedule.ListProviderDaysResponse, error) {
 	conn, err := helpers.ScheduleConnection()
@@ -218,7 +234,7 @@ func (r *queryResolver) ListCustomerDays(ctx context.Context, input *schedule.Li
 }
 
 // GetDayDetails is the resolver for the GetDayDetails field.
-func (r *queryResolver) GetDayDetails(ctx context.Context, input *schedule.DayInput) (*schedule.DayDetails, error) {
+func (r *queryResolver) GetDayDetails(ctx context.Context, input *schedule.GetDayDetailsRequest) (*schedule.DayDetails, error) {
 	conn, err := helpers.ScheduleConnection()
 	if err != nil {
 		fmt.Println("Error connecting to the client")
@@ -351,6 +367,31 @@ func (r *queryResolver) GetAppointmentCharge(ctx context.Context, input *catalog
 		return nil, err
 	}
 	return res, nil
+}
+
+// GetPublicProfileSection is the resolver for the GetPublicProfileSection field.
+func (r *queryResolver) GetPublicProfileSection(ctx context.Context, input *account.GetPublicProfileSectionRequest) (*account.ProfileSectionResponse, error) {
+	panic(fmt.Errorf("not implemented: GetPublicProfileSection - GetPublicProfileSection"))
+}
+
+// GetPrivateProfileSection is the resolver for the GetPrivateProfileSection field.
+func (r *queryResolver) GetPrivateProfileSection(ctx context.Context, input *account.GetPrivateProfileSectionRequest) (*account.ProfileSectionResponse, error) {
+	panic(fmt.Errorf("not implemented: GetPrivateProfileSection - GetPrivateProfileSection"))
+}
+
+// GetPrivateBasicUserInfo is the resolver for the GetPrivateBasicUserInfo field.
+func (r *queryResolver) GetPrivateBasicUserInfo(ctx context.Context, input *string) (*account.PrivateBasicUserInfo, error) {
+	panic(fmt.Errorf("not implemented: GetPrivateBasicUserInfo - GetPrivateBasicUserInfo"))
+}
+
+// GetPublicBasicUserInfo is the resolver for the GetPublicBasicUserInfo field.
+func (r *queryResolver) GetPublicBasicUserInfo(ctx context.Context, input *account.GetPublicBasicUserInfoRequest) (*account.PublicBasicUserInfo, error) {
+	panic(fmt.Errorf("not implemented: GetPublicBasicUserInfo - GetPublicBasicUserInfo"))
+}
+
+// GetCustomerReviews is the resolver for the GetCustomerReviews field.
+func (r *queryResolver) GetCustomerReviews(ctx context.Context, input *account.GetCustomerReviewsRequest) (*account.GetCustomerReviewsResponse, error) {
+	panic(fmt.Errorf("not implemented: GetCustomerReviews - GetCustomerReviews"))
 }
 
 // Mutation returns MutationResolver implementation.

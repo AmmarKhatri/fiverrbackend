@@ -66,6 +66,10 @@ autobind:
   - "graph-gateway/protos/schedule"
   - "graph-gateway/protos/comms"
   - "graph-gateway/protos/catalog"
+  - "graph-gateway/protos/account"
+  - "google.golang.org/genproto/googleapis/type/date"
+  - "google.golang.org/genproto/googleapis/type/color"
+  - "google.golang.org/genproto/googleapis/type/postaladdress"
 
 # This section declares type mapping between the GraphQL and go type systems
 #

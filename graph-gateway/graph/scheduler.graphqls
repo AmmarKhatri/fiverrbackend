@@ -1,195 +1,340 @@
-# GraphQL schema example
-#
-# https://gqlgen.com/getting-started/
-type ServiceType {
-    id: ID! 
-    label: String! 
-    description: String! 
-    base_price: Int! 
-    default_duration: Int! 
-}
-type Day {
-    provider: Provider!
-    calendar_date: Int! 
-    is_available: Boolean! 
-    labels: [Label!]!
-}
-input DayInput {
-    provider: ProviderInput!
-    calendar_date: Int! 
-    is_available: Boolean! 
-    labels: [LabelInput!]!
-}
+# # GraphQL schema example
+# #
+# # https://gqlgen.com/getting-started/
+
+
 type Label {
-  id: ID! 
-  label_text: String! 
-  label_color: String!
+    id: ID!
+    label_text: String!
+    label_color: Color!
+}
+type Color {
+    red: Float!
+    green: Float!
+    blue: Float!
+    alpha: FloatValue!
 }
 
+type FloatValue {
+    value: Float!
+}
 input LabelInput {
-  id: ID! 
-  label_text: String! 
-  label_color: String!
-}
-
-input ProviderInput {
     id: ID!
-    name: String! 
-    phone: String!
-    email: String!
-    has_visible_calendar: Boolean!
-    service_types: [ServiceTypeInput!]! 
+    label_text: String!
+    label_color: ColorInput!
 }
-
-input ServiceTypeInput{
-    id: ID!
-    label: String!
-    description: String!
-    base_price: Int!
-    default_duration: Int!
+input ColorInput {
+    red: Float!
+    green: Float!
+    blue: Float!
+    alpha: FloatValueInput!
 }
-
-type Provider{
-    id: ID!
-    name: String!
-    phone: String!
-    email: String!
-    has_visible_calendar: Boolean!
-    service_types: [ServiceType!]!
+input FloatValueInput {
+    value: Float!
 }
-
-type Customer {
-    id: ID!
-    name: String!
-    phone: String!
-    email: String!
-    recipients: [Recipient!]!
-}
-input CustomerInput {
-    id: ID!
-    name: String!
-    phone: String!
-    email: String!
-    recipients: [RecipientInput!]!
-}
-
 type Recipient {
     id: ID!
-    recipient_id: ID!
+    caretaker_id: ID!
     name: String!
-    recipient_type: Int!
-    attributes: [RecipientAttributes!]! 
-}
-
-input RecipientInput {
-    id: ID!
-    recipient_id: ID!
-    name: String!
-    recipient_type: Int!
-    attributes: [RecipientAttributesInput!]! 
-}
-
-type RecipientAttributes {
     recipient_type_id: ID!
-    attribute_name: String!
-    attribute_value: String!
 }
 
-input RecipientAttributesInput {
-    recipient_type_id: ID!
-    attribute_name: String!
-    attribute_value: String!
-}
-type DaySummary {
-    provider: Provider!
-    day: Int!
-    appointment_summaries: [AppointmentTypeSummary!]! 
-}
-
-input DaySummaryInput {
-    provider: ProviderInput!
-    day: Int!
-    appointment_summaries: [AppointmentTypeSummaryInput!]! 
-}
-input AppointmentTypeSummaryInput{
-  icon: String!
-  total_appointments_per_type: Int!
-}
-type AppointmentTypeSummary{
-  icon: String!
-  total_appointments_per_type: Int!
-}
 type Appointment {
-    appointment_id: ID!
-    provider: Provider!
-    customer: Customer!
-    service_type: ServiceType!
-    startDate: Int!
-    duration: Int!
-    days: [Day!]!
+    id: ID!
+    provider_id: ID!
+    customer_id: ID!
+    service_id: ID!
+    start_datetime: String!
+    end_datetime: String!
+    recipients: [Recipient!]!
 }
 
-input AppointmentInput {
-    appointment_id: ID!
-    provider: ProviderInput!
-    customer: CustomerInput!
-    service_type: ServiceTypeInput!
-    startDate: Int!
-    duration: Int!
-    days: [DayInput!]!
+type ServiceSummary {
+    icon: String!
+    total_appointments_for_service: Int!
+    service_id: ID!
+}
+
+type DaySummary{
+    provider_id: ID!
+    calendar_date: Date!
+    count_by_service_type: [ServiceSummary!]!
+}
+type Date {
+    year: Int!
+    month: Int!
+    day: Int!
+}
+input DateInput {
+    year: Int!
+    month: Int!
+    day: Int!
+}
+type CustomerDay {
+    provider_id: ID!
+    calendar_date: Date!
+    is_available: Boolean!
+    appointment_id: ID
 }
 type ProviderDay{
-    date: Day!
+    provider_id: ID!
+    calendar_date: Date!
+    is_available: Boolean!
     labels: [Label!]!
     day_summary: DaySummary!
 }
-
-input ProviderDayInput{
-    date: DayInput!
+input ProviderDayInput {
+    provider_id: ID!
+    calendar_date: DateInput!
+    is_available: Boolean!
     labels: [LabelInput!]!
-    day_summary: DaySummaryInput!
 }
-
-type CustomerDay {
-    date: Day!
-    appointment: Appointment!
+type DayDetails {
+    calendar_date: Date!
+    appointments: [Appointment!]!
 }
-
 input ListDaysRequest {
-    id: ID!
-    provider: ProviderInput! 
-    startDate: Int!
+    provider_id: ID!
+    startDate: DateInput!
     length: Int!
 }
-
 type ListProviderDaysResponse {
-    days: [ProviderDay!]! 
+    days: [ProviderDay!]!
 }
-
 type ListCustomerDaysResponse {
     days: [CustomerDay!]!
 }
-
 input UpdateCalendarRequest {
-    provider: ProviderInput!
     days: [ProviderDayInput!]!
 }
-
 type UpdateCalendarResponse{
     days: [ProviderDay!]!
 }
-
-input AddAppointmentRequest {
-    provider: ProviderInput!
-    appointment: AppointmentInput!
+input AddAppointmentRequest{
+    appointment_id: ID
+    provider_id: ID!
+    customer_id: ID!
+    service_id: ID!
+    start_datetime: String!
+    end_datetime: String!
+    recipient_ids: [Int!]!
 }
-
 input CancelAppointmentRequest {
     appointment_id: ID!
+    datetime_of_cancellation: String!
 }
-type DayDetails {
-    provider: Provider!
-    day: String!
-    appointments: [Appointment!]!
+input GetDayDetailsRequest {
+    calendar_date: DateInput!
 }
 scalar Empty
+#######################################################
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# type ServiceType {
+#     id: ID! 
+#     label: String! 
+#     description: String! 
+#     base_price: Int! 
+#     default_duration: Int! 
+# }
+# type Day {
+#     provider: Provider!
+#     calendar_date: Int! 
+#     is_available: Boolean! 
+#     labels: [Label!]!
+# }
+# input DayInput {
+#     provider: ProviderInput!
+#     calendar_date: Int! 
+#     is_available: Boolean! 
+#     labels: [LabelInput!]!
+# }
+# type Label {
+#   id: ID! 
+#   label_text: String! 
+#   label_color: String!
+# }
+
+# input LabelInput {
+#   id: ID! 
+#   label_text: String! 
+#   label_color: String!
+# }
+
+# input ProviderInput {
+#     id: ID!
+#     name: String! 
+#     phone: String!
+#     email: String!
+#     has_visible_calendar: Boolean!
+#     service_types: [ServiceTypeInput!]! 
+# }
+
+# input ServiceTypeInput{
+#     id: ID!
+#     label: String!
+#     description: String!
+#     base_price: Int!
+#     default_duration: Int!
+# }
+
+# type Provider{
+#     id: ID!
+#     name: String!
+#     phone: String!
+#     email: String!
+#     has_visible_calendar: Boolean!
+#     service_types: [ServiceType!]!
+# }
+
+# type Customer {
+#     id: ID!
+#     name: String!
+#     phone: String!
+#     email: String!
+#     recipients: [Recipient!]!
+# }
+# input CustomerInput {
+#     id: ID!
+#     name: String!
+#     phone: String!
+#     email: String!
+#     recipients: [RecipientInput!]!
+# }
+
+# type Recipient {
+#     id: ID!
+#     recipient_id: ID!
+#     name: String!
+#     recipient_type: Int!
+#     attributes: [RecipientAttributes!]! 
+# }
+
+# input RecipientInput {
+#     id: ID!
+#     recipient_id: ID!
+#     name: String!
+#     recipient_type: Int!
+#     attributes: [RecipientAttributesInput!]! 
+# }
+
+# type RecipientAttributes {
+#     recipient_type_id: ID!
+#     attribute_name: String!
+#     attribute_value: String!
+# }
+
+# input RecipientAttributesInput {
+#     recipient_type_id: ID!
+#     attribute_name: String!
+#     attribute_value: String!
+# }
+# type DaySummary {
+#     provider: Provider!
+#     day: Int!
+#     appointment_summaries: [AppointmentTypeSummary!]! 
+# }
+
+# input DaySummaryInput {
+#     provider: ProviderInput!
+#     day: Int!
+#     appointment_summaries: [AppointmentTypeSummaryInput!]! 
+# }
+# input AppointmentTypeSummaryInput{
+#   icon: String!
+#   total_appointments_per_type: Int!
+# }
+# type AppointmentTypeSummary{
+#   icon: String!
+#   total_appointments_per_type: Int!
+# }
+# type Appointment {
+#     appointment_id: ID!
+#     provider: Provider!
+#     customer: Customer!
+#     service_type: ServiceType!
+#     startDate: Int!
+#     duration: Int!
+#     days: [Day!]!
+# }
+
+# input AppointmentInput {
+#     appointment_id: ID!
+#     provider: ProviderInput!
+#     customer: CustomerInput!
+#     service_type: ServiceTypeInput!
+#     startDate: Int!
+#     duration: Int!
+#     days: [DayInput!]!
+# }
+# type ProviderDay{
+#     date: Day!
+#     labels: [Label!]!
+#     day_summary: DaySummary!
+# }
+
+# input ProviderDayInput{
+#     date: DayInput!
+#     labels: [LabelInput!]!
+#     day_summary: DaySummaryInput!
+# }
+
+# type CustomerDay {
+#     date: Day!
+#     appointment: Appointment!
+# }
+
+# input ListDaysRequest {
+#     id: ID!
+#     provider: ProviderInput! 
+#     startDate: Int!
+#     length: Int!
+# }
+
+# type ListProviderDaysResponse {
+#     days: [ProviderDay!]! 
+# }
+
+# type ListCustomerDaysResponse {
+#     days: [CustomerDay!]!
+# }
+
+# input UpdateCalendarRequest {
+#     provider: ProviderInput!
+#     days: [ProviderDayInput!]!
+# }
+
+# type UpdateCalendarResponse{
+#     days: [ProviderDay!]!
+# }
+
+# input AddAppointmentRequest {
+#     provider: ProviderInput!
+#     appointment: AppointmentInput!
+# }
+
+# input CancelAppointmentRequest {
+#     appointment_id: ID!
+# }
+# type DayDetails {
+#     provider: Provider!
+#     day: String!
+#     appointments: [Appointment!]!
+# }

@@ -37,7 +37,7 @@ type SchedulerClient interface {
 	UpdateCalendar(ctx context.Context, in *UpdateCalendarRequest, opts ...grpc.CallOption) (*UpdateCalendarResponse, error)
 	AddAppointment(ctx context.Context, in *AddAppointmentRequest, opts ...grpc.CallOption) (*Appointment, error)
 	CancelAppointment(ctx context.Context, in *CancelAppointmentRequest, opts ...grpc.CallOption) (*empty.Empty, error)
-	GetDayDetails(ctx context.Context, in *DayInput, opts ...grpc.CallOption) (*DayDetails, error)
+	GetDayDetails(ctx context.Context, in *GetDayDetailsRequest, opts ...grpc.CallOption) (*DayDetails, error)
 }
 
 type schedulerClient struct {
@@ -93,7 +93,7 @@ func (c *schedulerClient) CancelAppointment(ctx context.Context, in *CancelAppoi
 	return out, nil
 }
 
-func (c *schedulerClient) GetDayDetails(ctx context.Context, in *DayInput, opts ...grpc.CallOption) (*DayDetails, error) {
+func (c *schedulerClient) GetDayDetails(ctx context.Context, in *GetDayDetailsRequest, opts ...grpc.CallOption) (*DayDetails, error) {
 	out := new(DayDetails)
 	err := c.cc.Invoke(ctx, Scheduler_GetDayDetails_FullMethodName, in, out, opts...)
 	if err != nil {
@@ -111,7 +111,7 @@ type SchedulerServer interface {
 	UpdateCalendar(context.Context, *UpdateCalendarRequest) (*UpdateCalendarResponse, error)
 	AddAppointment(context.Context, *AddAppointmentRequest) (*Appointment, error)
 	CancelAppointment(context.Context, *CancelAppointmentRequest) (*empty.Empty, error)
-	GetDayDetails(context.Context, *DayInput) (*DayDetails, error)
+	GetDayDetails(context.Context, *GetDayDetailsRequest) (*DayDetails, error)
 	mustEmbedUnimplementedSchedulerServer()
 }
 
@@ -134,7 +134,7 @@ func (UnimplementedSchedulerServer) AddAppointment(context.Context, *AddAppointm
 func (UnimplementedSchedulerServer) CancelAppointment(context.Context, *CancelAppointmentRequest) (*empty.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CancelAppointment not implemented")
 }
-func (UnimplementedSchedulerServer) GetDayDetails(context.Context, *DayInput) (*DayDetails, error) {
+func (UnimplementedSchedulerServer) GetDayDetails(context.Context, *GetDayDetailsRequest) (*DayDetails, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetDayDetails not implemented")
 }
 func (UnimplementedSchedulerServer) mustEmbedUnimplementedSchedulerServer() {}
@@ -241,7 +241,7 @@ func _Scheduler_CancelAppointment_Handler(srv interface{}, ctx context.Context, 
 }
 
 func _Scheduler_GetDayDetails_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(DayInput)
+	in := new(GetDayDetailsRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -253,7 +253,7 @@ func _Scheduler_GetDayDetails_Handler(srv interface{}, ctx context.Context, dec 
 		FullMethod: Scheduler_GetDayDetails_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SchedulerServer).GetDayDetails(ctx, req.(*DayInput))
+		return srv.(SchedulerServer).GetDayDetails(ctx, req.(*GetDayDetailsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
