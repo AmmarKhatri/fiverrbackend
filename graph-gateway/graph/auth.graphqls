@@ -1,0 +1,32 @@
+input LoginRequest {
+    email: String!
+    password: String!
+}
+
+input Validate2FARequest {
+    two_fa_code: String!
+}
+input RegisterAccountRequest {
+    email: String!
+}
+input ValidateEmailRequest {
+    new_user_token: String!
+}
+input SetPasswordRequest {
+    password: String!
+    password_confirmed: String!
+}
+
+input Set2FARequest {
+    mode: String!
+}
+
+input ForgotPasswordRequest {
+    email:String!
+}
+
+input ResetPasswordRequest {
+    reset_token: String
+    password: String!
+    password_confirmed:String!
+}

@@ -41,4 +41,14 @@ type Mutation {
     UpdateProfileSection(input: UpdateProfileSectionRequest): ProfileSectionResponse!
     UpdateBasicUserInfo(input: UpdatePrivateBasicUserInfoRequest): PrivateBasicUserInfo!
     AddCustomerReview(input: AddCustomerReviewRequest): CustomerReview!
+    #auth mutations
+    Login(input: LoginRequest): Empty
+    Validate2FA(input: Validate2FARequest): Empty
+    RegisterAccount(input: RegisterAccountRequest): Empty
+    ValidateEmail(input: ValidateEmailRequest): Empty
+    SetPassword(input: SetPasswordRequest): Empty
+    Set2FA(input: Set2FARequest):Empty
+    Logout(input: Empty): Empty
+    ForgotPassword(input: ForgotPasswordRequest): Empty
+    ResetPassword(input: ResetPasswordRequest): Empty
 }

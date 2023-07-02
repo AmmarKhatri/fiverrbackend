@@ -28,3 +28,19 @@ func CatalogConnection() (*grpc.ClientConn, error) {
 	}
 	return conn, err
 }
+
+func AccountConnection() (*grpc.ClientConn, error) {
+	conn, err := grpc.Dial("account-service:50004", grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
+	if err != nil {
+		return nil, err
+	}
+	return conn, err
+}
+
+func AuthConnection() (*grpc.ClientConn, error) {
+	conn, err := grpc.Dial("auth-service:50005", grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
+	if err != nil {
+		return nil, err
+	}
+	return conn, err
+}

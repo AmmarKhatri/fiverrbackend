@@ -17,6 +17,9 @@
 		},
 		{
 			"path": "account-service"
+		},
+		{
+			"path": "auth-service"
 		}
 	],
 	"settings": {}

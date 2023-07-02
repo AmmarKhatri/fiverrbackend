@@ -9,9 +9,12 @@ import (
 	"fmt"
 	"graph-gateway/graph/helpers"
 	"graph-gateway/protos/account"
+	"graph-gateway/protos/auth"
 	"graph-gateway/protos/catalog"
 	"graph-gateway/protos/comms"
 	"graph-gateway/protos/schedule"
+
+	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 // UpdateCalendar is the resolver for the UpdateCalendar field.
@@ -186,17 +189,206 @@ func (r *mutationResolver) SetClientPrice(ctx context.Context, input *catalog.Se
 
 // UpdateProfileSection is the resolver for the UpdateProfileSection field.
 func (r *mutationResolver) UpdateProfileSection(ctx context.Context, input *account.UpdateProfileSectionRequest) (*account.ProfileSectionResponse, error) {
-	panic(fmt.Errorf("not implemented: UpdateProfileSection - UpdateProfileSection"))
+	conn, err := helpers.AccountConnection()
+	if err != nil {
+		fmt.Println("Error connecting to the client")
+		return nil, err
+	}
+	defer conn.Close()
+	c := account.NewAccountClient(conn)
+	res, err := c.UpdateProfileSection(ctx, input)
+	if err != nil {
+		fmt.Println("Error getting response and calling function")
+		return nil, err
+	}
+	return res, nil
 }
 
 // UpdateBasicUserInfo is the resolver for the UpdateBasicUserInfo field.
 func (r *mutationResolver) UpdateBasicUserInfo(ctx context.Context, input *account.UpdatePrivateBasicUserInfoRequest) (*account.PrivateBasicUserInfo, error) {
-	panic(fmt.Errorf("not implemented: UpdateBasicUserInfo - UpdateBasicUserInfo"))
+	conn, err := helpers.AccountConnection()
+	if err != nil {
+		fmt.Println("Error connecting to the client")
+		return nil, err
+	}
+	defer conn.Close()
+	c := account.NewAccountClient(conn)
+	res, err := c.UpdateBasicUserInfo(ctx, input)
+	if err != nil {
+		fmt.Println("Error getting response and calling function")
+		return nil, err
+	}
+	return res, nil
 }
 
 // AddCustomerReview is the resolver for the AddCustomerReview field.
 func (r *mutationResolver) AddCustomerReview(ctx context.Context, input *account.AddCustomerReviewRequest) (*account.CustomerReview, error) {
-	panic(fmt.Errorf("not implemented: AddCustomerReview - AddCustomerReview"))
+	conn, err := helpers.AccountConnection()
+	if err != nil {
+		fmt.Println("Error connecting to the client")
+		return nil, err
+	}
+	defer conn.Close()
+	c := account.NewAccountClient(conn)
+	res, err := c.AddCustomerReview(ctx, input)
+	if err != nil {
+		fmt.Println("Error getting response and calling function")
+		return nil, err
+	}
+	return res, nil
+}
+
+// Login is the resolver for the Login field.
+func (r *mutationResolver) Login(ctx context.Context, input *auth.LoginRequest) (*string, error) {
+	conn, err := helpers.AuthConnection()
+	if err != nil {
+		fmt.Println("Error connecting to the client")
+		return nil, err
+	}
+	defer conn.Close()
+	c := auth.NewAuthClient(conn)
+	_, err = c.Login(ctx, input)
+	if err != nil {
+		fmt.Println("Error getting response and calling function")
+		return nil, err
+	}
+	return nil, nil
+}
+
+// Validate2fa is the resolver for the Validate2FA field.
+func (r *mutationResolver) Validate2fa(ctx context.Context, input *auth.Validate2FARequest) (*string, error) {
+	conn, err := helpers.AuthConnection()
+	if err != nil {
+		fmt.Println("Error connecting to the client")
+		return nil, err
+	}
+	defer conn.Close()
+	c := auth.NewAuthClient(conn)
+	_, err = c.Validate2FA(ctx, input)
+	if err != nil {
+		fmt.Println("Error getting response and calling function")
+		return nil, err
+	}
+	return nil, nil
+}
+
+// RegisterAccount is the resolver for the RegisterAccount field.
+func (r *mutationResolver) RegisterAccount(ctx context.Context, input *auth.RegisterAccountRequest) (*string, error) {
+	conn, err := helpers.AuthConnection()
+	if err != nil {
+		fmt.Println("Error connecting to the client")
+		return nil, err
+	}
+	defer conn.Close()
+	c := auth.NewAuthClient(conn)
+	_, err = c.RegisterAccount(ctx, input)
+	if err != nil {
+		fmt.Println("Error getting response and calling function")
+		return nil, err
+	}
+	return nil, nil
+}
+
+// ValidateEmail is the resolver for the ValidateEmail field.
+func (r *mutationResolver) ValidateEmail(ctx context.Context, input *auth.ValidateEmailRequest) (*string, error) {
+	conn, err := helpers.AuthConnection()
+	if err != nil {
+		fmt.Println("Error connecting to the client")
+		return nil, err
+	}
+	defer conn.Close()
+	c := auth.NewAuthClient(conn)
+	_, err = c.ValidateEmail(ctx, input)
+	if err != nil {
+		fmt.Println("Error getting response and calling function")
+		return nil, err
+	}
+	return nil, nil
+}
+
+// SetPassword is the resolver for the SetPassword field.
+func (r *mutationResolver) SetPassword(ctx context.Context, input *auth.SetPasswordRequest) (*string, error) {
+	conn, err := helpers.AuthConnection()
+	if err != nil {
+		fmt.Println("Error connecting to the client")
+		return nil, err
+	}
+	defer conn.Close()
+	c := auth.NewAuthClient(conn)
+	_, err = c.SetPassword(ctx, input)
+	if err != nil {
+		fmt.Println("Error getting response and calling function")
+		return nil, err
+	}
+	return nil, nil
+}
+
+// Set2fa is the resolver for the Set2FA field.
+func (r *mutationResolver) Set2fa(ctx context.Context, input *auth.Set2FARequest) (*string, error) {
+	conn, err := helpers.AuthConnection()
+	if err != nil {
+		fmt.Println("Error connecting to the client")
+		return nil, err
+	}
+	defer conn.Close()
+	c := auth.NewAuthClient(conn)
+	_, err = c.Set2FA(ctx, input)
+	if err != nil {
+		fmt.Println("Error getting response and calling function")
+		return nil, err
+	}
+	return nil, nil
+}
+
+// Logout is the resolver for the Logout field.
+func (r *mutationResolver) Logout(ctx context.Context, input *string) (*string, error) {
+	conn, err := helpers.AuthConnection()
+	if err != nil {
+		fmt.Println("Error connecting to the client")
+		return nil, err
+	}
+	defer conn.Close()
+	c := auth.NewAuthClient(conn)
+	_, err = c.Logout(ctx, &emptypb.Empty{})
+	if err != nil {
+		fmt.Println("Error getting response and calling function")
+		return nil, err
+	}
+	return nil, nil
+}
+
+// ForgotPassword is the resolver for the ForgotPassword field.
+func (r *mutationResolver) ForgotPassword(ctx context.Context, input *auth.ForgotPasswordRequest) (*string, error) {
+	conn, err := helpers.AuthConnection()
+	if err != nil {
+		fmt.Println("Error connecting to the client")
+		return nil, err
+	}
+	defer conn.Close()
+	c := auth.NewAuthClient(conn)
+	_, err = c.ForgotPassword(ctx, input)
+	if err != nil {
+		fmt.Println("Error getting response and calling function")
+		return nil, err
+	}
+	return nil, nil
+}
+
+// ResetPassword is the resolver for the ResetPassword field.
+func (r *mutationResolver) ResetPassword(ctx context.Context, input *auth.ResetPasswordRequest) (*string, error) {
+	conn, err := helpers.AuthConnection()
+	if err != nil {
+		fmt.Println("Error connecting to the client")
+		return nil, err
+	}
+	defer conn.Close()
+	c := auth.NewAuthClient(conn)
+	_, err = c.ResetPassword(ctx, input)
+	if err != nil {
+		fmt.Println("Error getting response and calling function")
+		return nil, err
+	}
+	return nil, nil
 }
 
 // ListProviderDays is the resolver for the ListProviderDays field.
@@ -371,27 +563,87 @@ func (r *queryResolver) GetAppointmentCharge(ctx context.Context, input *catalog
 
 // GetPublicProfileSection is the resolver for the GetPublicProfileSection field.
 func (r *queryResolver) GetPublicProfileSection(ctx context.Context, input *account.GetPublicProfileSectionRequest) (*account.ProfileSectionResponse, error) {
-	panic(fmt.Errorf("not implemented: GetPublicProfileSection - GetPublicProfileSection"))
+	conn, err := helpers.AccountConnection()
+	if err != nil {
+		fmt.Println("Error connecting to the client")
+		return nil, err
+	}
+	defer conn.Close()
+	c := account.NewAccountClient(conn)
+	res, err := c.GetPublicProfileSection(ctx, input)
+	if err != nil {
+		fmt.Println("Error getting response and calling function")
+		return nil, err
+	}
+	return res, nil
 }
 
 // GetPrivateProfileSection is the resolver for the GetPrivateProfileSection field.
 func (r *queryResolver) GetPrivateProfileSection(ctx context.Context, input *account.GetPrivateProfileSectionRequest) (*account.ProfileSectionResponse, error) {
-	panic(fmt.Errorf("not implemented: GetPrivateProfileSection - GetPrivateProfileSection"))
+	conn, err := helpers.AccountConnection()
+	if err != nil {
+		fmt.Println("Error connecting to the client")
+		return nil, err
+	}
+	defer conn.Close()
+	c := account.NewAccountClient(conn)
+	res, err := c.GetPrivateProfileSection(ctx, input)
+	if err != nil {
+		fmt.Println("Error getting response and calling function")
+		return nil, err
+	}
+	return res, nil
 }
 
 // GetPrivateBasicUserInfo is the resolver for the GetPrivateBasicUserInfo field.
 func (r *queryResolver) GetPrivateBasicUserInfo(ctx context.Context, input *string) (*account.PrivateBasicUserInfo, error) {
-	panic(fmt.Errorf("not implemented: GetPrivateBasicUserInfo - GetPrivateBasicUserInfo"))
+	conn, err := helpers.AccountConnection()
+	if err != nil {
+		fmt.Println("Error connecting to the client")
+		return nil, err
+	}
+	defer conn.Close()
+	c := account.NewAccountClient(conn)
+	res, err := c.GetPrivateBasicUserInfo(ctx, &emptypb.Empty{})
+	if err != nil {
+		fmt.Println("Error getting response and calling function")
+		return nil, err
+	}
+	return res, nil
 }
 
 // GetPublicBasicUserInfo is the resolver for the GetPublicBasicUserInfo field.
 func (r *queryResolver) GetPublicBasicUserInfo(ctx context.Context, input *account.GetPublicBasicUserInfoRequest) (*account.PublicBasicUserInfo, error) {
-	panic(fmt.Errorf("not implemented: GetPublicBasicUserInfo - GetPublicBasicUserInfo"))
+	conn, err := helpers.AccountConnection()
+	if err != nil {
+		fmt.Println("Error connecting to the client")
+		return nil, err
+	}
+	defer conn.Close()
+	c := account.NewAccountClient(conn)
+	res, err := c.GetPublicBasicUserInfo(ctx, input)
+	if err != nil {
+		fmt.Println("Error getting response and calling function")
+		return nil, err
+	}
+	return res, nil
 }
 
 // GetCustomerReviews is the resolver for the GetCustomerReviews field.
 func (r *queryResolver) GetCustomerReviews(ctx context.Context, input *account.GetCustomerReviewsRequest) (*account.GetCustomerReviewsResponse, error) {
-	panic(fmt.Errorf("not implemented: GetCustomerReviews - GetCustomerReviews"))
+	conn, err := helpers.AccountConnection()
+	if err != nil {
+		fmt.Println("Error connecting to the client")
+		return nil, err
+	}
+	defer conn.Close()
+	c := account.NewAccountClient(conn)
+	res, err := c.GetCustomerReviews(ctx, input)
+	if err != nil {
+		fmt.Println("Error getting response and calling function")
+		return nil, err
+	}
+	return res, nil
 }
 
 // Mutation returns MutationResolver implementation.

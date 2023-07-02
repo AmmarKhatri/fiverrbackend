@@ -1,0 +1,158 @@
+query ShedulerQueries {
+  ListProviderDays(input: {
+    provider_id: 1,
+    startDate: {
+      year: 2023,
+      month: 6,
+      day: 23,
+    },
+    length: 20
+  }){
+    days{
+      is_available,
+      provider_id,
+      labels{
+        label_text,
+        label_color{
+          red,
+          blue,
+          green,
+          alpha{
+            value
+          }
+        },
+        id
+      },
+      calendar_date{
+        year,
+        month,
+        day
+      }
+    },
+  }
+  ListCustomerDays(input: {
+    provider_id: 2,
+    startDate: {
+      year: 2023,
+      month: 6,
+      day: 23,
+    },
+    length: 20
+  }){
+    days{
+      is_available,
+      provider_id,
+      calendar_date{
+        year,
+        month,
+        day
+      }
+    },
+  }
+  GetDayDetails(input: {
+    calendar_date: {
+      year:2023,
+      month: 7,
+      day:1
+    }
+  }){
+    appointments{
+      service_id,
+      id,
+      provider_id,
+      end_datetime,
+      start_datetime,
+      recipients{
+        name,
+        id,
+        caretaker_id,
+        recipient_type_id
+      },
+    },
+    calendar_date{
+      year,
+      month,
+      day
+    }
+  }
+}
+
+mutation SchedulerMutations {
+  UpdateCalendar(input: {
+    days:[
+    	{
+        provider_id: 1,
+        calendar_date: {
+          day: 20,
+          month: 12,
+          year: 2020
+        },
+        is_available: true,
+        labels: {
+          label_color: {
+            alpha: {
+              value: 0.9
+            },
+            red: 0.8,
+            blue: 0.7,
+            green: 0.1
+          },
+          label_text: "Some color",
+          id: 1
+        }
+      }
+    ]
+  }){
+    days{
+      labels{
+        id,
+        label_color{
+          red,
+          green,
+          blue,
+          alpha{
+            value
+          }
+        }
+      },
+      calendar_date{
+        day,
+        year,
+        month
+      },
+      provider_id,
+      day_summary{
+        provider_id,
+        calendar_date{
+          day,
+          year,
+          month
+        },
+        count_by_service_type{
+          service_id,
+          total_appointments_for_service,
+          icon,
+        }
+      }
+    }
+  }
+ 	AddAppointment(input: {
+    provider_id: 1,
+    customer_id: 1,
+    service_id: 2,
+    start_datetime: "",
+    end_datetime: "",
+    recipient_ids: 1
+  }){
+    id,
+    customer_id,
+    service_id,
+    provider_id,
+    end_datetime,
+    start_datetime,
+  }
+  CancelAppointment(input: {
+    appointment_id: 1,
+    datetime_of_cancellation: ""
+  })
+}

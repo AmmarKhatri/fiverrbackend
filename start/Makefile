@@ -2,14 +2,14 @@ SCHEDULER_BINARY=schedulerApp
 GRAPH_BINARY=graphApp
 CATALOG_BINARY=catalogApp
 ACCOUNT_BINARY=accountApp
-
+AUTH_BINARY=authApp
 ## up: starts all containers in the background without forcing build
 up:
 	@echo "Starting Docker images..."
 	docker-compose up -d
 	@echo "Docker images started!"
 
-up_build: build_graph build_scheduler build_catalog build_account
+up_build: build_graph build_scheduler build_catalog build_account build_auth
 	@echo "Stopping docker images (if running...)"
 	docker-compose down
 	@echo "Building (when required) and starting docker images..."
@@ -44,4 +44,10 @@ build_catalog:
 build_account:
 	@echo "Building account binary..."
 	cd ../account-service && env GOOS=linux CGO_ENABLED=0 go build -o ${ACCOUNT_BINARY}
+	@echo "Done!"
+
+## build_auth: builds the auth binary as a linux executable
+build_auth:
+	@echo "Building auth binary..."
+	cd ../auth-service && env GOOS=linux CGO_ENABLED=0 go build -o ${AUTH_BINARY}
 	@echo "Done!"

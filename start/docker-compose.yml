@@ -65,3 +65,15 @@ services:
     deploy:
       mode: replicated
       replicas: 1
+  auth-service:
+    build:
+      context: ./../auth-service
+      dockerfile: ./../auth-service/auth-service.dockerfile
+    restart: always
+    ports:
+      - "50005:50005"
+    env_file:
+      - ./../auth-service/.env
+    deploy:
+      mode: replicated
+      replicas: 1

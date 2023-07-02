@@ -1,0 +1,53 @@
+syntax = "proto3";
+package auth;
+option go_package = "/auth";
+import "google/protobuf/empty.proto";
+
+message LoginRequest {
+    string email = 1;
+    string password = 2;
+}
+
+message Validate2FARequest {
+    string two_fa_code = 1;
+}
+
+message RegisterAccountRequest {
+    string email = 1;
+}
+
+message ValidateEmailRequest {
+    string new_user_token = 1;
+}
+
+message SetPasswordRequest {
+    string password = 1;
+    string password_confirmed = 2;
+}
+
+message Set2FARequest {
+    string mode = 1;
+}
+
+message ForgotPasswordRequest {
+    string email = 1;
+}
+
+// If reset_token is missing or empty, there must be a valid JWT
+message ResetPasswordRequest {
+    optional string reset_token = 1;
+    string password = 2;
+    string password_confirmed = 3;
+}
+
+service Auth {
+    rpc Login(LoginRequest) returns (google.protobuf.Empty);
+    rpc Validate2FA(Validate2FARequest) returns (google.protobuf.Empty);
+    rpc RegisterAccount(RegisterAccountRequest) returns (google.protobuf.Empty);
+    rpc ValidateEmail(ValidateEmailRequest) returns (google.protobuf.Empty);
+    rpc SetPassword(SetPasswordRequest) returns (google.protobuf.Empty);
+    rpc Set2FA(Set2FARequest) returns (google.protobuf.Empty);
+    rpc Logout(google.protobuf.Empty) returns (google.protobuf.Empty);
+    rpc ForgotPassword(ForgotPasswordRequest) returns (google.protobuf.Empty);
+    rpc ResetPassword(ResetPasswordRequest) returns (google.protobuf.Empty);
+}
