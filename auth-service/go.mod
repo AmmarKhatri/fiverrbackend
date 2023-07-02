@@ -3,6 +3,7 @@ module auth-service
 go 1.20
 
 require (
+	github.com/golang-jwt/jwt/v4 v4.5.0
 	github.com/golang/protobuf v1.5.3
 	google.golang.org/grpc v1.56.1
 	google.golang.org/protobuf v1.31.0

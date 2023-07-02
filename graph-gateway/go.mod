@@ -5,6 +5,7 @@ go 1.20
 require (
 	github.com/99designs/gqlgen v0.17.33
 	github.com/gin-gonic/gin v1.9.1
+	github.com/golang-jwt/jwt/v4 v4.5.0
 	github.com/golang/protobuf v1.5.3
 	github.com/vektah/gqlparser/v2 v2.5.3
 	google.golang.org/genproto v0.0.0-20230306155012-7f2fa6fef1f4
