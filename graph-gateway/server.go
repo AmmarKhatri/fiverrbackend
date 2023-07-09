@@ -4,6 +4,7 @@ import (
 	"log"
 	"os"
 
+	authhelpers "graph-gateway/helpers"
 	"graph-gateway/http"
 	"graph-gateway/routes"
 
@@ -21,10 +22,9 @@ func main() {
 	server := gin.New()
 	server.Use(gin.Logger())
 	server.Use(gin.Recovery())
-
 	//srv := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{Resolvers: &graph.Resolver{}}))
 	server.GET("/", http.PlaygroundHandler())
-	server.POST("/query", http.GraphQLHandler())
+	server.POST("/query", authhelpers.AuthMiddleWare(), http.GraphQLHandler())
 
 	//comms REST routes
 	routes.RegisterUserRoutes(server.Group(""))

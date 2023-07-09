@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"graph-gateway/graph/helpers"
+	authhelpers "graph-gateway/helpers"
 	"graph-gateway/protos/account"
 	"graph-gateway/protos/auth"
 	"graph-gateway/protos/catalog"
@@ -19,227 +20,335 @@ import (
 
 // UpdateCalendar is the resolver for the UpdateCalendar field.
 func (r *mutationResolver) UpdateCalendar(ctx context.Context, input *schedule.UpdateCalendarRequest) (*schedule.UpdateCalendarResponse, error) {
-	conn, err := helpers.ScheduleConnection()
-	if err != nil {
-		fmt.Println("Error connecting to the client")
-		return nil, err
+	claims := authhelpers.ForContext(ctx)
+	// Access claim properties as needed
+	if claims != nil {
+		userID := claims.Id
+		fmt.Println(userID, "just called UpdateCalendar")
+		conn, err := helpers.ScheduleConnection()
+		if err != nil {
+			fmt.Println("Error connecting to the client")
+			return nil, err
+		}
+		defer conn.Close()
+		c := schedule.NewSchedulerClient(conn)
+		res, err := c.UpdateCalendar(ctx, input)
+		if err != nil {
+			fmt.Println("Error getting response and calling function")
+			return nil, err
+		}
+		return res, nil
+	} else {
+		return nil, fmt.Errorf("No user initiator was found in the request.")
 	}
-	defer conn.Close()
-	c := schedule.NewSchedulerClient(conn)
-	res, err := c.UpdateCalendar(ctx, input)
-	if err != nil {
-		fmt.Println("Error getting response and calling function")
-		return nil, err
-	}
-	return res, nil
 }
 
 // AddAppointment is the resolver for the AddAppointment field.
 func (r *mutationResolver) AddAppointment(ctx context.Context, input *schedule.AddAppointmentRequest) (*schedule.Appointment, error) {
-	conn, err := helpers.ScheduleConnection()
-	if err != nil {
-		fmt.Println("Error connecting to the client")
-		return nil, err
+	claims := authhelpers.ForContext(ctx)
+	// Access claim properties as needed
+	if claims != nil {
+		userID := claims.Id
+		fmt.Println(userID, "just called AddAppointment")
+		conn, err := helpers.ScheduleConnection()
+		if err != nil {
+			fmt.Println("Error connecting to the client")
+			return nil, err
+		}
+		defer conn.Close()
+		c := schedule.NewSchedulerClient(conn)
+		res, err := c.AddAppointment(ctx, input)
+		if err != nil {
+			fmt.Println("Error getting response and calling function")
+			return nil, err
+		}
+		return res, nil
+	} else {
+		return nil, fmt.Errorf("No user initiator was found in the request.")
 	}
-	defer conn.Close()
-	c := schedule.NewSchedulerClient(conn)
-	res, err := c.AddAppointment(ctx, input)
-	if err != nil {
-		fmt.Println("Error getting response and calling function")
-		return nil, err
-	}
-	return res, nil
 }
 
 // CancelAppointment is the resolver for the CancelAppointment field.
 func (r *mutationResolver) CancelAppointment(ctx context.Context, input *schedule.CancelAppointmentRequest) (*string, error) {
-	conn, err := helpers.ScheduleConnection()
-	if err != nil {
-		fmt.Println("Error connecting to the client")
-		return nil, err
+	claims := authhelpers.ForContext(ctx)
+	// Access claim properties as needed
+	if claims != nil {
+		userID := claims.Id
+		fmt.Println(userID, "just called CancelAppointment")
+		conn, err := helpers.ScheduleConnection()
+		if err != nil {
+			fmt.Println("Error connecting to the client")
+			return nil, err
+		}
+		defer conn.Close()
+		c := schedule.NewSchedulerClient(conn)
+		_, err = c.CancelAppointment(ctx, input)
+		if err != nil {
+			fmt.Println("Error getting response and calling function")
+			return nil, err
+		}
+		return nil, nil
+	} else {
+		return nil, fmt.Errorf("No user initiator was found in the request.")
 	}
-	defer conn.Close()
-	c := schedule.NewSchedulerClient(conn)
-	_, err = c.CancelAppointment(ctx, input)
-	if err != nil {
-		fmt.Println("Error getting response and calling function")
-		return nil, err
-	}
-	return nil, nil
 }
 
 // AcceptedAppointment is the resolver for the AcceptedAppointment field.
 func (r *mutationResolver) AcceptedAppointment(ctx context.Context, input *comms.AcceptedAppointmentInput) (*comms.CommsAppointment, error) {
-	conn, err := helpers.CommsConnection()
-	if err != nil {
-		fmt.Println("Error connecting to the client")
-		return nil, err
+	claims := authhelpers.ForContext(ctx)
+	// Access claim properties as needed
+	if claims != nil {
+		userID := claims.Id
+		fmt.Println(userID, "just called AcceptedAppointment")
+		conn, err := helpers.CommsConnection()
+		if err != nil {
+			fmt.Println("Error connecting to the client")
+			return nil, err
+		}
+		defer conn.Close()
+		c := comms.NewCommunicatorClient(conn)
+		res, err := c.AcceptAppointment(ctx, input)
+		if err != nil {
+			fmt.Println("Error getting response and calling function")
+			return nil, err
+		}
+		return res, nil
+	} else {
+		return nil, fmt.Errorf("No user initiator was found in the request.")
 	}
-	defer conn.Close()
-	c := comms.NewCommunicatorClient(conn)
-	res, err := c.AcceptAppointment(ctx, input)
-	if err != nil {
-		fmt.Println("Error getting response and calling function")
-		return nil, err
-	}
-	return res, nil
 }
 
 // RejectedAppointment is the resolver for the RejectedAppointment field.
 func (r *mutationResolver) RejectedAppointment(ctx context.Context, input *comms.RejectedAppointmentInput) (*string, error) {
-	conn, err := helpers.CommsConnection()
-	if err != nil {
-		fmt.Println("Error connecting to the client")
-		return nil, err
+
+	claims := authhelpers.ForContext(ctx)
+	// Access claim properties as needed
+	if claims != nil {
+		userID := claims.Id
+		fmt.Println(userID, "just called RejectedAppointment")
+		conn, err := helpers.CommsConnection()
+		if err != nil {
+			fmt.Println("Error connecting to the client")
+			return nil, err
+		}
+		defer conn.Close()
+		c := comms.NewCommunicatorClient(conn)
+		_, err = c.RejectAppointment(ctx, input)
+		if err != nil {
+			fmt.Println("Error getting response and calling function")
+			return nil, err
+		}
+		return nil, nil
+	} else {
+		return nil, fmt.Errorf("No user initiator was found in the request.")
 	}
-	defer conn.Close()
-	c := comms.NewCommunicatorClient(conn)
-	_, err = c.RejectAppointment(ctx, input)
-	if err != nil {
-		fmt.Println("Error getting response and calling function")
-		return nil, err
-	}
-	return nil, nil
 }
 
 // SendMessageFromConsole is the resolver for the SendMessageFromConsole field.
 func (r *mutationResolver) SendMessageFromConsole(ctx context.Context, input *comms.ConsoleMessageInput) (*comms.ConsoleMessage, error) {
-	conn, err := helpers.CommsConnection()
-	if err != nil {
-		fmt.Println("Error connecting to the client")
-		return nil, err
+	claims := authhelpers.ForContext(ctx)
+	// Access claim properties as needed
+	if claims != nil {
+		userID := claims.Id
+		fmt.Println(userID, "just called SendMessageFromConsole")
+		conn, err := helpers.CommsConnection()
+		if err != nil {
+			fmt.Println("Error connecting to the client")
+			return nil, err
+		}
+		defer conn.Close()
+		c := comms.NewCommunicatorClient(conn)
+		res, err := c.SendMessageFromConsole(ctx, input)
+		if err != nil {
+			fmt.Println("Error getting response and calling function")
+			return nil, err
+		}
+		return res, nil
+	} else {
+		return nil, fmt.Errorf("No user initiator was found in the request.")
 	}
-	defer conn.Close()
-	c := comms.NewCommunicatorClient(conn)
-	res, err := c.SendMessageFromConsole(ctx, input)
-	if err != nil {
-		fmt.Println("Error getting response and calling function")
-		return nil, err
-	}
-	return res, nil
 }
 
 // AddService is the resolver for the AddService field.
 func (r *mutationResolver) AddService(ctx context.Context, input *catalog.AddServiceRequest) (*catalog.Service, error) {
-	conn, err := helpers.CatalogConnection()
-	if err != nil {
-		fmt.Println("Error connecting to the client")
-		return nil, err
+	claims := authhelpers.ForContext(ctx)
+	// Access claim properties as needed
+	if claims != nil {
+		userID := claims.Id
+		fmt.Println(userID, "just called AddService")
+		// Use the claim properties in your resolver logic
+		conn, err := helpers.CatalogConnection()
+		if err != nil {
+			fmt.Println("Error connecting to the client")
+			return nil, err
+		}
+		defer conn.Close()
+		c := catalog.NewCatalogClient(conn)
+		res, err := c.AddService(ctx, input)
+		if err != nil {
+			fmt.Println("Error getting response and calling function")
+			return nil, err
+		}
+		return res, nil
+	} else {
+		return nil, fmt.Errorf("No user initiator was found in the request.")
 	}
-	defer conn.Close()
-	c := catalog.NewCatalogClient(conn)
-	res, err := c.AddService(ctx, input)
-	if err != nil {
-		fmt.Println("Error getting response and calling function")
-		return nil, err
-	}
-	return res, nil
+
 }
 
 // EditService is the resolver for the EditService field.
 func (r *mutationResolver) EditService(ctx context.Context, input *catalog.EditServiceRequest) (*catalog.Service, error) {
-	conn, err := helpers.CatalogConnection()
-	if err != nil {
-		fmt.Println("Error connecting to the client")
-		return nil, err
+	claims := authhelpers.ForContext(ctx)
+	// Access claim properties as needed
+	if claims != nil {
+		userID := claims.Id
+		fmt.Println(userID, "just called EditService")
+		conn, err := helpers.CatalogConnection()
+		if err != nil {
+			fmt.Println("Error connecting to the client")
+			return nil, err
+		}
+		defer conn.Close()
+		c := catalog.NewCatalogClient(conn)
+		res, err := c.EditService(ctx, input)
+		if err != nil {
+			fmt.Println("Error getting response and calling function")
+			return nil, err
+		}
+		return res, nil
+	} else {
+		return nil, fmt.Errorf("No user initiator was found in the request.")
 	}
-	defer conn.Close()
-	c := catalog.NewCatalogClient(conn)
-	res, err := c.EditService(ctx, input)
-	if err != nil {
-		fmt.Println("Error getting response and calling function")
-		return nil, err
-	}
-	return res, nil
 }
 
 // DeleteService is the resolver for the DeleteService field.
 func (r *mutationResolver) DeleteService(ctx context.Context, input *catalog.DeleteServiceRequest) (*string, error) {
-	conn, err := helpers.CatalogConnection()
-	if err != nil {
-		fmt.Println("Error connecting to the client")
-		return nil, err
+	claims := authhelpers.ForContext(ctx)
+	// Access claim properties as needed
+	if claims != nil {
+		userID := claims.Id
+		fmt.Println(userID, "just called DeleteService")
+		conn, err := helpers.CatalogConnection()
+		if err != nil {
+			fmt.Println("Error connecting to the client")
+			return nil, err
+		}
+		defer conn.Close()
+		c := catalog.NewCatalogClient(conn)
+		_, err = c.DeleteService(ctx, input)
+		if err != nil {
+			fmt.Println("Error getting response and calling function")
+			return nil, err
+		}
+		return nil, nil
+	} else {
+		return nil, fmt.Errorf("No user initiator was found in the request.")
 	}
-	defer conn.Close()
-	c := catalog.NewCatalogClient(conn)
-	_, err = c.DeleteService(ctx, input)
-	if err != nil {
-		fmt.Println("Error getting response and calling function")
-		return nil, err
-	}
-	return nil, nil
 }
 
 // SetClientPrice is the resolver for the SetClientPrice field.
 func (r *mutationResolver) SetClientPrice(ctx context.Context, input *catalog.SetClientPriceRequest) (*catalog.ClientPrice, error) {
-	conn, err := helpers.CatalogConnection()
-	if err != nil {
-		fmt.Println("Error connecting to the client")
-		return nil, err
+	claims := authhelpers.ForContext(ctx)
+	// Access claim properties as needed
+	if claims != nil {
+		userID := claims.Id
+		fmt.Println(userID, "just called SetClientPrice")
+		conn, err := helpers.CatalogConnection()
+		if err != nil {
+			fmt.Println("Error connecting to the client")
+			return nil, err
+		}
+		defer conn.Close()
+		c := catalog.NewCatalogClient(conn)
+		res, err := c.SetClientPrice(ctx, input)
+		if err != nil {
+			fmt.Println("Error getting response and calling function")
+			return nil, err
+		}
+		return res, nil
+	} else {
+		return nil, fmt.Errorf("No user initiator was found in the request.")
 	}
-	defer conn.Close()
-	c := catalog.NewCatalogClient(conn)
-	res, err := c.SetClientPrice(ctx, input)
-	if err != nil {
-		fmt.Println("Error getting response and calling function")
-		return nil, err
-	}
-	return res, nil
 }
 
 // UpdateProfileSection is the resolver for the UpdateProfileSection field.
 func (r *mutationResolver) UpdateProfileSection(ctx context.Context, input *account.UpdateProfileSectionRequest) (*account.ProfileSectionResponse, error) {
-	conn, err := helpers.AccountConnection()
-	if err != nil {
-		fmt.Println("Error connecting to the client")
-		return nil, err
+	claims := authhelpers.ForContext(ctx)
+	// Access claim properties as needed
+	if claims != nil {
+		userID := claims.Id
+		fmt.Println(userID, "just called UpdateProfileSection")
+		conn, err := helpers.AccountConnection()
+		if err != nil {
+			fmt.Println("Error connecting to the client")
+			return nil, err
+		}
+		defer conn.Close()
+		c := account.NewAccountClient(conn)
+		res, err := c.UpdateProfileSection(ctx, input)
+		if err != nil {
+			fmt.Println("Error getting response and calling function")
+			return nil, err
+		}
+		return res, nil
+	} else {
+		return nil, fmt.Errorf("No user initiator was found in the request.")
 	}
-	defer conn.Close()
-	c := account.NewAccountClient(conn)
-	res, err := c.UpdateProfileSection(ctx, input)
-	if err != nil {
-		fmt.Println("Error getting response and calling function")
-		return nil, err
-	}
-	return res, nil
 }
 
 // UpdateBasicUserInfo is the resolver for the UpdateBasicUserInfo field.
 func (r *mutationResolver) UpdateBasicUserInfo(ctx context.Context, input *account.UpdatePrivateBasicUserInfoRequest) (*account.PrivateBasicUserInfo, error) {
-	conn, err := helpers.AccountConnection()
-	if err != nil {
-		fmt.Println("Error connecting to the client")
-		return nil, err
+	claims := authhelpers.ForContext(ctx)
+	// Access claim properties as needed
+	if claims != nil {
+		userID := claims.Id
+		fmt.Println(userID, "just called UpdateBasicUserInfo")
+		conn, err := helpers.AccountConnection()
+		if err != nil {
+			fmt.Println("Error connecting to the client")
+			return nil, err
+		}
+		defer conn.Close()
+		c := account.NewAccountClient(conn)
+		res, err := c.UpdateBasicUserInfo(ctx, input)
+		if err != nil {
+			fmt.Println("Error getting response and calling function")
+			return nil, err
+		}
+		return res, nil
+	} else {
+		return nil, fmt.Errorf("No user initiator was found in the request.")
 	}
-	defer conn.Close()
-	c := account.NewAccountClient(conn)
-	res, err := c.UpdateBasicUserInfo(ctx, input)
-	if err != nil {
-		fmt.Println("Error getting response and calling function")
-		return nil, err
-	}
-	return res, nil
 }
 
 // AddCustomerReview is the resolver for the AddCustomerReview field.
 func (r *mutationResolver) AddCustomerReview(ctx context.Context, input *account.AddCustomerReviewRequest) (*account.CustomerReview, error) {
-	conn, err := helpers.AccountConnection()
-	if err != nil {
-		fmt.Println("Error connecting to the client")
-		return nil, err
+	claims := authhelpers.ForContext(ctx)
+	// Access claim properties as needed
+	if claims != nil {
+		userID := claims.Id
+		fmt.Println(userID, "just called AddCustomerReview")
+		conn, err := helpers.AccountConnection()
+		if err != nil {
+			fmt.Println("Error connecting to the client")
+			return nil, err
+		}
+		defer conn.Close()
+		c := account.NewAccountClient(conn)
+		res, err := c.AddCustomerReview(ctx, input)
+		if err != nil {
+			fmt.Println("Error getting response and calling function")
+			return nil, err
+		}
+		return res, nil
+	} else {
+		return nil, fmt.Errorf("No user initiator was found in the request.")
 	}
-	defer conn.Close()
-	c := account.NewAccountClient(conn)
-	res, err := c.AddCustomerReview(ctx, input)
-	if err != nil {
-		fmt.Println("Error getting response and calling function")
-		return nil, err
-	}
-	return res, nil
 }
 
 // Login is the resolver for the Login field.
 func (r *mutationResolver) Login(ctx context.Context, input *auth.LoginRequest) (*string, error) {
+	//public endpoint
 	conn, err := helpers.AuthConnection()
 	if err != nil {
 		fmt.Println("Error connecting to the client")
@@ -257,23 +366,32 @@ func (r *mutationResolver) Login(ctx context.Context, input *auth.LoginRequest) 
 
 // Validate2fa is the resolver for the Validate2FA field.
 func (r *mutationResolver) Validate2fa(ctx context.Context, input *auth.Validate2FARequest) (*string, error) {
-	conn, err := helpers.AuthConnection()
-	if err != nil {
-		fmt.Println("Error connecting to the client")
-		return nil, err
+	claims := authhelpers.ForContext(ctx)
+	// Access claim properties as needed
+	if claims != nil {
+		userID := claims.Id
+		fmt.Println(userID, "just called Validate2fa")
+		conn, err := helpers.AuthConnection()
+		if err != nil {
+			fmt.Println("Error connecting to the client")
+			return nil, err
+		}
+		defer conn.Close()
+		c := auth.NewAuthClient(conn)
+		_, err = c.Validate2FA(ctx, input)
+		if err != nil {
+			fmt.Println("Error getting response and calling function")
+			return nil, err
+		}
+		return nil, nil
+	} else {
+		return nil, fmt.Errorf("No user initiator was found in the request.")
 	}
-	defer conn.Close()
-	c := auth.NewAuthClient(conn)
-	_, err = c.Validate2FA(ctx, input)
-	if err != nil {
-		fmt.Println("Error getting response and calling function")
-		return nil, err
-	}
-	return nil, nil
 }
 
 // RegisterAccount is the resolver for the RegisterAccount field.
 func (r *mutationResolver) RegisterAccount(ctx context.Context, input *auth.RegisterAccountRequest) (*string, error) {
+	//public endpoint
 	conn, err := helpers.AuthConnection()
 	if err != nil {
 		fmt.Println("Error connecting to the client")
@@ -291,74 +409,107 @@ func (r *mutationResolver) RegisterAccount(ctx context.Context, input *auth.Regi
 
 // ValidateEmail is the resolver for the ValidateEmail field.
 func (r *mutationResolver) ValidateEmail(ctx context.Context, input *auth.ValidateEmailRequest) (*string, error) {
-	conn, err := helpers.AuthConnection()
-	if err != nil {
-		fmt.Println("Error connecting to the client")
-		return nil, err
+	claims := authhelpers.ForContext(ctx)
+	// Access claim properties as needed
+	if claims != nil {
+		userID := claims.Id
+		fmt.Println(userID, "just called ValidateEmail")
+		conn, err := helpers.AuthConnection()
+		if err != nil {
+			fmt.Println("Error connecting to the client")
+			return nil, err
+		}
+		defer conn.Close()
+		c := auth.NewAuthClient(conn)
+		_, err = c.ValidateEmail(ctx, input)
+		if err != nil {
+			fmt.Println("Error getting response and calling function")
+			return nil, err
+		}
+		return nil, nil
+	} else {
+		return nil, fmt.Errorf("No user initiator was found in the request.")
 	}
-	defer conn.Close()
-	c := auth.NewAuthClient(conn)
-	_, err = c.ValidateEmail(ctx, input)
-	if err != nil {
-		fmt.Println("Error getting response and calling function")
-		return nil, err
-	}
-	return nil, nil
 }
 
 // SetPassword is the resolver for the SetPassword field.
 func (r *mutationResolver) SetPassword(ctx context.Context, input *auth.SetPasswordRequest) (*string, error) {
-	conn, err := helpers.AuthConnection()
-	if err != nil {
-		fmt.Println("Error connecting to the client")
-		return nil, err
+	claims := authhelpers.ForContext(ctx)
+	// Access claim properties as needed
+	if claims != nil {
+		userID := claims.Id
+		fmt.Println(userID, "just called SetPassword")
+		conn, err := helpers.AuthConnection()
+		if err != nil {
+			fmt.Println("Error connecting to the client")
+			return nil, err
+		}
+		defer conn.Close()
+		c := auth.NewAuthClient(conn)
+		_, err = c.SetPassword(ctx, input)
+		if err != nil {
+			fmt.Println("Error getting response and calling function")
+			return nil, err
+		}
+		return nil, nil
+	} else {
+		return nil, fmt.Errorf("No user initiator was found in the request.")
 	}
-	defer conn.Close()
-	c := auth.NewAuthClient(conn)
-	_, err = c.SetPassword(ctx, input)
-	if err != nil {
-		fmt.Println("Error getting response and calling function")
-		return nil, err
-	}
-	return nil, nil
 }
 
 // Set2fa is the resolver for the Set2FA field.
 func (r *mutationResolver) Set2fa(ctx context.Context, input *auth.Set2FARequest) (*string, error) {
-	conn, err := helpers.AuthConnection()
-	if err != nil {
-		fmt.Println("Error connecting to the client")
-		return nil, err
+	claims := authhelpers.ForContext(ctx)
+	// Access claim properties as needed
+	if claims != nil {
+		userID := claims.Id
+		fmt.Println(userID, "just called Set2fa")
+		conn, err := helpers.AuthConnection()
+		if err != nil {
+			fmt.Println("Error connecting to the client")
+			return nil, err
+		}
+		defer conn.Close()
+		c := auth.NewAuthClient(conn)
+		_, err = c.Set2FA(ctx, input)
+		if err != nil {
+			fmt.Println("Error getting response and calling function")
+			return nil, err
+		}
+		return nil, nil
+	} else {
+		return nil, fmt.Errorf("No user initiator was found in the request.")
 	}
-	defer conn.Close()
-	c := auth.NewAuthClient(conn)
-	_, err = c.Set2FA(ctx, input)
-	if err != nil {
-		fmt.Println("Error getting response and calling function")
-		return nil, err
-	}
-	return nil, nil
 }
 
 // Logout is the resolver for the Logout field.
 func (r *mutationResolver) Logout(ctx context.Context, input *string) (*string, error) {
-	conn, err := helpers.AuthConnection()
-	if err != nil {
-		fmt.Println("Error connecting to the client")
-		return nil, err
+	claims := authhelpers.ForContext(ctx)
+	// Access claim properties as needed
+	if claims != nil {
+		userID := claims.Id
+		fmt.Println(userID, "just called Logout")
+		conn, err := helpers.AuthConnection()
+		if err != nil {
+			fmt.Println("Error connecting to the client")
+			return nil, err
+		}
+		defer conn.Close()
+		c := auth.NewAuthClient(conn)
+		_, err = c.Logout(ctx, &emptypb.Empty{})
+		if err != nil {
+			fmt.Println("Error getting response and calling function")
+			return nil, err
+		}
+		return nil, nil
+	} else {
+		return nil, fmt.Errorf("No user initiator was found in the request.")
 	}
-	defer conn.Close()
-	c := auth.NewAuthClient(conn)
-	_, err = c.Logout(ctx, &emptypb.Empty{})
-	if err != nil {
-		fmt.Println("Error getting response and calling function")
-		return nil, err
-	}
-	return nil, nil
 }
 
 // ForgotPassword is the resolver for the ForgotPassword field.
 func (r *mutationResolver) ForgotPassword(ctx context.Context, input *auth.ForgotPasswordRequest) (*string, error) {
+	//public endpoint
 	conn, err := helpers.AuthConnection()
 	if err != nil {
 		fmt.Println("Error connecting to the client")
@@ -376,40 +527,58 @@ func (r *mutationResolver) ForgotPassword(ctx context.Context, input *auth.Forgo
 
 // ResetPassword is the resolver for the ResetPassword field.
 func (r *mutationResolver) ResetPassword(ctx context.Context, input *auth.ResetPasswordRequest) (*string, error) {
-	conn, err := helpers.AuthConnection()
-	if err != nil {
-		fmt.Println("Error connecting to the client")
-		return nil, err
+	claims := authhelpers.ForContext(ctx)
+	// Access claim properties as needed
+	if claims != nil {
+		userID := claims.Id
+		fmt.Println(userID, "just called ResetPassword")
+		conn, err := helpers.AuthConnection()
+		if err != nil {
+			fmt.Println("Error connecting to the client")
+			return nil, err
+		}
+		defer conn.Close()
+		c := auth.NewAuthClient(conn)
+		_, err = c.ResetPassword(ctx, input)
+		if err != nil {
+			fmt.Println("Error getting response and calling function")
+			return nil, err
+		}
+		return nil, nil
+	} else {
+		return nil, fmt.Errorf("No user initiator was found in the request.")
 	}
-	defer conn.Close()
-	c := auth.NewAuthClient(conn)
-	_, err = c.ResetPassword(ctx, input)
-	if err != nil {
-		fmt.Println("Error getting response and calling function")
-		return nil, err
-	}
-	return nil, nil
 }
 
 // ListProviderDays is the resolver for the ListProviderDays field.
 func (r *queryResolver) ListProviderDays(ctx context.Context, input *schedule.ListDaysRequest) (*schedule.ListProviderDaysResponse, error) {
-	conn, err := helpers.ScheduleConnection()
-	if err != nil {
-		fmt.Println("Error connecting to the client")
-		return nil, err
+
+	claims := authhelpers.ForContext(ctx)
+	// Access claim properties as needed
+	if claims != nil {
+		userID := claims.Id
+		fmt.Println(userID, "just called ListProviderDays")
+		conn, err := helpers.ScheduleConnection()
+		if err != nil {
+			fmt.Println("Error connecting to the client")
+			return nil, err
+		}
+		defer conn.Close()
+		c := schedule.NewSchedulerClient(conn)
+		res, err := c.ListProviderDays(ctx, input)
+		if err != nil {
+			fmt.Println("Error getting response and calling function")
+			return nil, err
+		}
+		return res, nil
+	} else {
+		return nil, fmt.Errorf("No user initiator was found in the request.")
 	}
-	defer conn.Close()
-	c := schedule.NewSchedulerClient(conn)
-	res, err := c.ListProviderDays(ctx, input)
-	if err != nil {
-		fmt.Println("Error getting response and calling function")
-		return nil, err
-	}
-	return res, nil
 }
 
 // ListCustomerDays is the resolver for the ListCustomerDays field.
 func (r *queryResolver) ListCustomerDays(ctx context.Context, input *schedule.ListDaysRequest) (*schedule.ListCustomerDaysResponse, error) {
+	//public endpoint
 	conn, err := helpers.ScheduleConnection()
 	if err != nil {
 		fmt.Println("Error connecting to the client")
@@ -427,23 +596,32 @@ func (r *queryResolver) ListCustomerDays(ctx context.Context, input *schedule.Li
 
 // GetDayDetails is the resolver for the GetDayDetails field.
 func (r *queryResolver) GetDayDetails(ctx context.Context, input *schedule.GetDayDetailsRequest) (*schedule.DayDetails, error) {
-	conn, err := helpers.ScheduleConnection()
-	if err != nil {
-		fmt.Println("Error connecting to the client")
-		return nil, err
+	claims := authhelpers.ForContext(ctx)
+	// Access claim properties as needed
+	if claims != nil {
+		userID := claims.Id
+		fmt.Println(userID, "just called ListCustomerDays")
+		conn, err := helpers.ScheduleConnection()
+		if err != nil {
+			fmt.Println("Error connecting to the client")
+			return nil, err
+		}
+		defer conn.Close()
+		c := schedule.NewSchedulerClient(conn)
+		res, err := c.GetDayDetails(ctx, input)
+		if err != nil {
+			fmt.Println("Error getting response and calling function")
+			return nil, err
+		}
+		return res, nil
+	} else {
+		return nil, fmt.Errorf("No user initiator was found in the request.")
 	}
-	defer conn.Close()
-	c := schedule.NewSchedulerClient(conn)
-	res, err := c.GetDayDetails(ctx, input)
-	if err != nil {
-		fmt.Println("Error getting response and calling function")
-		return nil, err
-	}
-	return res, nil
 }
 
 // ProcessOutgoingCallback is the resolver for the ProcessOutgoingCallback field.
 func (r *queryResolver) ProcessOutgoingCallback(ctx context.Context, input *comms.OutgoingCallbackRequest) (*string, error) {
+	//not used, extra endpoint (not applying auth)
 	conn, err := helpers.CommsConnection()
 	if err != nil {
 		fmt.Println("Error connecting to the client")
@@ -461,6 +639,7 @@ func (r *queryResolver) ProcessOutgoingCallback(ctx context.Context, input *comm
 
 // ProcessIncomingSMSCallback is the resolver for the ProcessIncomingSMSCallback field.
 func (r *queryResolver) ProcessIncomingSMSCallback(ctx context.Context, input *comms.IncomingSMSCallbackRequest) (*string, error) {
+	//not used, extra endpoint (not applying auth)
 	conn, err := helpers.CommsConnection()
 	if err != nil {
 		fmt.Println("Error connecting to the client")
@@ -478,6 +657,7 @@ func (r *queryResolver) ProcessIncomingSMSCallback(ctx context.Context, input *c
 
 // ProcessMultiChannelCallback is the resolver for the ProcessMultiChannelCallback field.
 func (r *queryResolver) ProcessMultiChannelCallback(ctx context.Context, input *comms.MultiChannelCallbackRequest) (*string, error) {
+	//not used, extra endpoint (not applying auth)
 	conn, err := helpers.CommsConnection()
 	if err != nil {
 		fmt.Println("Error connecting to the client")
@@ -495,23 +675,32 @@ func (r *queryResolver) ProcessMultiChannelCallback(ctx context.Context, input *
 
 // RequestAppointment is the resolver for the RequestAppointment field.
 func (r *queryResolver) RequestAppointment(ctx context.Context, input *comms.CommsAppointmentInput) (*comms.CommsPendingAppointment, error) {
-	conn, err := helpers.CommsConnection()
-	if err != nil {
-		fmt.Println("Error connecting to the client")
-		return nil, err
+	claims := authhelpers.ForContext(ctx)
+	// Access claim properties as needed
+	if claims != nil {
+		userID := claims.Id
+		fmt.Println(userID, "just called RequestAppointment")
+		conn, err := helpers.CommsConnection()
+		if err != nil {
+			fmt.Println("Error connecting to the client")
+			return nil, err
+		}
+		defer conn.Close()
+		c := comms.NewCommunicatorClient(conn)
+		res, err := c.RequestAppointment(ctx, input)
+		if err != nil {
+			fmt.Println("Error getting response and calling function")
+			return nil, err
+		}
+		return res, nil
+	} else {
+		return nil, fmt.Errorf("No user initiator was found in the request.")
 	}
-	defer conn.Close()
-	c := comms.NewCommunicatorClient(conn)
-	res, err := c.RequestAppointment(ctx, input)
-	if err != nil {
-		fmt.Println("Error getting response and calling function")
-		return nil, err
-	}
-	return res, nil
 }
 
 // GetCatalog is the resolver for the GetCatalog field.
 func (r *queryResolver) GetCatalog(ctx context.Context, input *catalog.GetCatalogRequest) (*catalog.GetCatalogResponse, error) {
+	//public endpoint
 	conn, err := helpers.CatalogConnection()
 	if err != nil {
 		fmt.Println("Error connecting to the client")
@@ -529,40 +718,57 @@ func (r *queryResolver) GetCatalog(ctx context.Context, input *catalog.GetCatalo
 
 // GetClientPrice is the resolver for the GetClientPrice field.
 func (r *queryResolver) GetClientPrice(ctx context.Context, input *catalog.GetClientPriceRequest) (*catalog.ClientPrice, error) {
-	conn, err := helpers.CatalogConnection()
-	if err != nil {
-		fmt.Println("Error connecting to the client")
-		return nil, err
+	claims := authhelpers.ForContext(ctx)
+	// Access claim properties as needed
+	if claims != nil {
+		userID := claims.Id
+		fmt.Println(userID, "just called GetClientPrice")
+		conn, err := helpers.CatalogConnection()
+		if err != nil {
+			fmt.Println("Error connecting to the client")
+			return nil, err
+		}
+		defer conn.Close()
+		c := catalog.NewCatalogClient(conn)
+		res, err := c.GetClientPrice(ctx, input)
+		if err != nil {
+			fmt.Println("Error getting response and calling function")
+			return nil, err
+		}
+		return res, nil
+	} else {
+		return nil, fmt.Errorf("No user initiator was found in the request.")
 	}
-	defer conn.Close()
-	c := catalog.NewCatalogClient(conn)
-	res, err := c.GetClientPrice(ctx, input)
-	if err != nil {
-		fmt.Println("Error getting response and calling function")
-		return nil, err
-	}
-	return res, nil
 }
 
 // GetAppointmentCharge is the resolver for the GetAppointmentCharge field.
 func (r *queryResolver) GetAppointmentCharge(ctx context.Context, input *catalog.GetAppointmentChargeRequest) (*catalog.AppointmentCharge, error) {
-	conn, err := helpers.CatalogConnection()
-	if err != nil {
-		fmt.Println("Error connecting to the client")
-		return nil, err
+	claims := authhelpers.ForContext(ctx)
+	// Access claim properties as needed
+	if claims != nil {
+		userID := claims.Id
+		fmt.Println(userID, "just called GetAppointmentCharge")
+		conn, err := helpers.CatalogConnection()
+		if err != nil {
+			fmt.Println("Error connecting to the client")
+			return nil, err
+		}
+		defer conn.Close()
+		c := catalog.NewCatalogClient(conn)
+		res, err := c.GetAppointmentCharge(ctx, input)
+		if err != nil {
+			fmt.Println("Error getting response and calling function")
+			return nil, err
+		}
+		return res, nil
+	} else {
+		return nil, fmt.Errorf("No user initiator was found in the request.")
 	}
-	defer conn.Close()
-	c := catalog.NewCatalogClient(conn)
-	res, err := c.GetAppointmentCharge(ctx, input)
-	if err != nil {
-		fmt.Println("Error getting response and calling function")
-		return nil, err
-	}
-	return res, nil
 }
 
 // GetPublicProfileSection is the resolver for the GetPublicProfileSection field.
 func (r *queryResolver) GetPublicProfileSection(ctx context.Context, input *account.GetPublicProfileSectionRequest) (*account.ProfileSectionResponse, error) {
+	//public endpoint
 	conn, err := helpers.AccountConnection()
 	if err != nil {
 		fmt.Println("Error connecting to the client")
@@ -580,40 +786,57 @@ func (r *queryResolver) GetPublicProfileSection(ctx context.Context, input *acco
 
 // GetPrivateProfileSection is the resolver for the GetPrivateProfileSection field.
 func (r *queryResolver) GetPrivateProfileSection(ctx context.Context, input *account.GetPrivateProfileSectionRequest) (*account.ProfileSectionResponse, error) {
-	conn, err := helpers.AccountConnection()
-	if err != nil {
-		fmt.Println("Error connecting to the client")
-		return nil, err
+	claims := authhelpers.ForContext(ctx)
+	// Access claim properties as needed
+	if claims != nil {
+		userID := claims.Id
+		fmt.Println(userID, "just called GetPrivateProfileSection")
+		conn, err := helpers.AccountConnection()
+		if err != nil {
+			fmt.Println("Error connecting to the client")
+			return nil, err
+		}
+		defer conn.Close()
+		c := account.NewAccountClient(conn)
+		res, err := c.GetPrivateProfileSection(ctx, input)
+		if err != nil {
+			fmt.Println("Error getting response and calling function")
+			return nil, err
+		}
+		return res, nil
+	} else {
+		return nil, fmt.Errorf("No user initiator was found in the request.")
 	}
-	defer conn.Close()
-	c := account.NewAccountClient(conn)
-	res, err := c.GetPrivateProfileSection(ctx, input)
-	if err != nil {
-		fmt.Println("Error getting response and calling function")
-		return nil, err
-	}
-	return res, nil
 }
 
 // GetPrivateBasicUserInfo is the resolver for the GetPrivateBasicUserInfo field.
 func (r *queryResolver) GetPrivateBasicUserInfo(ctx context.Context, input *string) (*account.PrivateBasicUserInfo, error) {
-	conn, err := helpers.AccountConnection()
-	if err != nil {
-		fmt.Println("Error connecting to the client")
-		return nil, err
+	claims := authhelpers.ForContext(ctx)
+	// Access claim properties as needed
+	if claims != nil {
+		userID := claims.Id
+		fmt.Println(userID, "just called GetPrivateBasicUserInfo")
+		conn, err := helpers.AccountConnection()
+		if err != nil {
+			fmt.Println("Error connecting to the client")
+			return nil, err
+		}
+		defer conn.Close()
+		c := account.NewAccountClient(conn)
+		res, err := c.GetPrivateBasicUserInfo(ctx, &emptypb.Empty{})
+		if err != nil {
+			fmt.Println("Error getting response and calling function")
+			return nil, err
+		}
+		return res, nil
+	} else {
+		return nil, fmt.Errorf("No user initiator was found in the request.")
 	}
-	defer conn.Close()
-	c := account.NewAccountClient(conn)
-	res, err := c.GetPrivateBasicUserInfo(ctx, &emptypb.Empty{})
-	if err != nil {
-		fmt.Println("Error getting response and calling function")
-		return nil, err
-	}
-	return res, nil
 }
 
 // GetPublicBasicUserInfo is the resolver for the GetPublicBasicUserInfo field.
 func (r *queryResolver) GetPublicBasicUserInfo(ctx context.Context, input *account.GetPublicBasicUserInfoRequest) (*account.PublicBasicUserInfo, error) {
+	//public endpoint
 	conn, err := helpers.AccountConnection()
 	if err != nil {
 		fmt.Println("Error connecting to the client")
@@ -631,6 +854,7 @@ func (r *queryResolver) GetPublicBasicUserInfo(ctx context.Context, input *accou
 
 // GetCustomerReviews is the resolver for the GetCustomerReviews field.
 func (r *queryResolver) GetCustomerReviews(ctx context.Context, input *account.GetCustomerReviewsRequest) (*account.GetCustomerReviewsResponse, error) {
+	//public endpoint
 	conn, err := helpers.AccountConnection()
 	if err != nil {
 		fmt.Println("Error connecting to the client")

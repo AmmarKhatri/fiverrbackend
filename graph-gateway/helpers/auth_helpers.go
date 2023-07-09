@@ -1,10 +1,11 @@
-package helpers
+package authhelpers
 
 import (
 	"context"
 	"fmt"
 	"net/http"
 	"os"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v4"
@@ -24,11 +25,24 @@ type Claims struct {
 
 func AuthMiddleWare() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		token := c.Request.Header.Get("Authorization")
-		fmt.Println(token, "is my token")
+		authHeader := c.Request.Header.Get("Authorization")
+		if authHeader == "" {
+			c.Next()
+			return
+		}
 
+		// Check if the Authorization header starts with "Basic"
+		if !strings.HasPrefix(authHeader, "Basic ") {
+			c.JSON(http.StatusUnauthorized, gin.H{
+				"message": "Invalid authorization header. Must be a basic token.",
+			})
+			c.Abort()
+			return
+		}
+		token := strings.TrimPrefix(authHeader, "Basic ")
 		// Allow unauthenticated users in to access public endpoints or get rejected by private ones
 		if token == "" {
+			//allowing no token but with Basic header into the API
 			c.Next()
 			return
 		}
@@ -57,10 +71,8 @@ func AuthMiddleWare() gin.HandlerFunc {
 		}
 
 		// Store the user ID from the claims in the context
-		ctx := context.WithValue(c.Request.Context(), userCtxKey, claims.UserID)
+		ctx := context.WithValue(c.Request.Context(), userCtxKey, claims)
 		c.Request = c.Request.WithContext(ctx)
-
-		c.Next()
 		fmt.Println("authorized")
 		c.Next()
 	}

@@ -14,7 +14,7 @@ func (s *AuthServer) Login(ctx context.Context, req *auth.LoginRequest) (*emptyp
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println(token)
+	fmt.Println("Normal Token:", token)
 	//logic goes here
 	return &emptypb.Empty{}, nil
 }
